@@ -64,14 +64,17 @@ function createFetchHeaders(): HeadersInit {
   return headers;
 }
 
-// 帶重試機制的 fetch 函數
-async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 2): Promise<Response> {
+// 帶重試機制的 fetch 函數 - GCP 優化版本
+async function fetchWithRetry(url: string, options: RequestInit = {}, retries = isCloudRun ? 1 : 2): Promise<Response> {
+  // 統一請求配置 - 修復快取衝突
   const baseOptions: RequestInit = {
     ...options,
     headers: {
       ...createFetchHeaders(),
       ...options.headers
-    }
+    },
+    // GCP 環境：使用較短的超時時間避免建置逾時
+    signal: AbortSignal.timeout(isCloudRun ? 10000 : 15000)
   };
 
   for (let attempt = 1; attempt <= retries + 1; attempt++) {
@@ -110,8 +113,8 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
         throw error;
       }
       
-      // 等待後重試
-      const delay = attempt * 1000; // 1s, 2s, 3s...
+      // 等待後重試 - GCP 環境縮短等待時間
+      const delay = isCloudRun ? attempt * 500 : attempt * 1000; // 0.5s, 1s vs 1s, 2s
       await new Promise(resolve => setTimeout(resolve, delay));
       
       if (isCloudRun) {
@@ -132,8 +135,11 @@ export async function getRecentPosts(count: number = 6): Promise<WPPost[]> {
     const response = await fetchWithRetry(
       `${API_BASE}/posts?per_page=${count}&_embed&status=publish`,
       { 
-        next: { revalidate: 3600 },
-        cache: 'no-store' // GCP 環境避免快取問題
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' } // GCP: 不快取避免建置問題
+          : { next: { revalidate: 3600 } } // 本地: 使用 ISR
+        )
       }
     );
     
@@ -157,8 +163,11 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
     const response = await fetchWithRetry(
       `${API_BASE}/posts?slug=${slug}&_embed&status=publish`,
       { 
-        next: { revalidate: 3600 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 3600 } }
+        )
       }
     );
     
@@ -180,14 +189,17 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
 
 export async function getAllPosts(): Promise<WPPost[]> {
   try {
-    // GCP 環境：進一步減少資料量避免超時
-    const perPage = isCloudRun ? 20 : 30;
+    // GCP 環境：大幅減少資料量避免超時，只獲取必要欄位
+    const perPage = isCloudRun ? 15 : 30;
     
     const response = await fetchWithRetry(
-      `${API_BASE}/posts?per_page=${perPage}&status=publish&_fields=id,slug`,
+      `${API_BASE}/posts?per_page=${perPage}&status=publish&_fields=id,slug,title,date`,
       { 
-        next: { revalidate: 7200 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 7200 } }
+        )
       }
     );
     
@@ -208,10 +220,13 @@ export async function getAllPosts(): Promise<WPPost[]> {
 export async function getCategories(): Promise<WPCategory[]> {
   try {
     const response = await fetchWithRetry(
-      `${API_BASE}/categories?per_page=100&hide_empty=true`,
+      `${API_BASE}/categories?per_page=50&hide_empty=true&_fields=id,name,slug,count`,
       { 
-        next: { revalidate: 7200 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 7200 } }
+        )
       }
     );
     
@@ -231,11 +246,16 @@ export async function getCategories(): Promise<WPCategory[]> {
 
 export async function getPostsByCategory(categoryId: number, count: number = 10): Promise<WPPost[]> {
   try {
+    const actualCount = isCloudRun ? Math.min(count, 6) : count;
+    
     const response = await fetchWithRetry(
-      `${API_BASE}/posts?categories=${categoryId}&per_page=${count}&_embed&status=publish`,
+      `${API_BASE}/posts?categories=${categoryId}&per_page=${actualCount}&_embed&status=publish`,
       { 
-        next: { revalidate: 3600 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 3600 } }
+        )
       }
     );
     
@@ -263,14 +283,17 @@ export async function getPostsByCategoryWithPagination(
   order: 'asc' | 'desc' = 'desc'
 ): Promise<{ posts: WPPost[], totalPages: number, total: number }> {
   try {
-    // GCP 環境：減少每頁數量避免超時
-    const actualPerPage = isCloudRun ? Math.min(perPage, 8) : perPage;
+    // GCP 環境：大幅減少每頁數量避免超時
+    const actualPerPage = isCloudRun ? Math.min(perPage, 6) : perPage;
     
     const response = await fetchWithRetry(
       `${API_BASE}/posts?categories=${categoryId}&per_page=${actualPerPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish`,
       { 
-        next: { revalidate: 3600 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 3600 } }
+        )
       }
     );
     
@@ -331,11 +354,16 @@ export async function getRelatedCategories(categoryId: number): Promise<WPCatego
 
 export async function getPostsByTag(tagId: number, count: number = 10): Promise<WPPost[]> {
   try {
+    const actualCount = isCloudRun ? Math.min(count, 6) : count;
+    
     const response = await fetchWithRetry(
-      `${API_BASE}/posts?tags=${tagId}&per_page=${count}&_embed&status=publish`,
+      `${API_BASE}/posts?tags=${tagId}&per_page=${actualCount}&_embed&status=publish`,
       { 
-        next: { revalidate: 3600 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 3600 } }
+        )
       }
     );
     
@@ -358,10 +386,13 @@ export async function getPostsByTag(tagId: number, count: number = 10): Promise<
 export async function getCategoryById(categoryId: number): Promise<WPCategory | null> {
   try {
     const response = await fetchWithRetry(
-      `${API_BASE}/categories/${categoryId}`,
+      `${API_BASE}/categories/${categoryId}?_fields=id,name,slug,description,count`,
       { 
-        next: { revalidate: 7200 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 7200 } }
+        )
       }
     );
     
@@ -383,10 +414,13 @@ export async function getCategoryById(categoryId: number): Promise<WPCategory | 
 export async function getTags(): Promise<WPTag[]> {
   try {
     const response = await fetchWithRetry(
-      `${API_BASE}/tags?per_page=100&hide_empty=true`,
+      `${API_BASE}/tags?per_page=50&hide_empty=true&_fields=id,name,slug,count`,
       { 
-        next: { revalidate: 7200 },
-        cache: 'no-store'
+        // 修復：只使用一種快取策略
+        ...(isCloudRun 
+          ? { cache: 'no-store' }
+          : { next: { revalidate: 7200 } }
+        )
       }
     );
     
