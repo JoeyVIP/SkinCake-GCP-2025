@@ -4,6 +4,7 @@ import CategoryCards from '@/components/CategoryCards';
 import TagCloud from '@/components/TagCloud';
 import AdBanner from '@/components/AdBanner';
 import CakeNews from "@/components/features/CakeNews";
+import WordPressPosts from '@/components/WordPressPosts';
 import BackToTop from '@/components/BackToTop';
 
 export default function HomePage() {
@@ -49,10 +50,7 @@ export default function HomePage() {
             偷偷推薦給你
             <div className="w-20 h-1 bg-pink-500 mx-auto mt-4"></div>
           </h2>
-          {/* 這裡之後會添加推薦文章組件 */}
-          <div className="text-center text-gray-500 py-8">
-            推薦內容載入中...
-          </div>
+          <WordPressPosts />
         </div>
       </section>
 
