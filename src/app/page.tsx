@@ -2,6 +2,7 @@ import React from 'react';
 import Carousel from '@/components/Carousel';
 import CategoryCards from '@/components/CategoryCards';
 import AdBanner from '@/components/AdBanner';
+import CakeNews from "@/components/features/CakeNews";
 import BackToTop from '@/components/BackToTop';
 
 export default function HomePage() {
@@ -26,15 +27,9 @@ export default function HomePage() {
         <AdBanner />
       </section>
 
-      {/* 暫時隱藏其他組件來測試 */}
+      {/* 蛋糕報報 */}
       <section className="container mx-auto px-4 mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800">
-          蛋糕報報
-          <div className="w-20 h-1 bg-pink-500 mx-auto mt-4"></div>
-        </h2>
-        <div className="text-center py-12">
-          <p className="text-gray-600">載入中...</p>
-        </div>
+        <CakeNews />
       </section>
 
       {/* 偷偷推薦給你 */}
