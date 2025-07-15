@@ -1,264 +1,109 @@
-# SkinCake GCP + Cloudflare 部署指南 (2025版)
+# SkinCake V2.0.0 部署指南 - GCP + Cloudflare 混合雲架構
 
-## 概述
+> **版本**: V2.0.0 已部署  
+> **部署狀態**: ✅ 生產環境運行中  
+> **更新日期**: 2025/07/15  
+> **架構**: Next.js 14 + GCP Cloud Run + Cloudflare CDN  
 
-本指南將引導您完成 SkinCake 專案在 Google Cloud Platform 上的後端部署，並結合 Cloudflare 作為 CDN 和安全層，實現 2025 年 V1 版本所需的最佳性能與安全性。
+---
 
-## 前置準備
+## 🎯 **部署架構總覽**
 
-### 1. 環境要求
-- Google Cloud Platform 帳戶（已啟用計費）
-- Cloudflare 帳戶（您的網域已在此管理）
-- Google Cloud SDK 安裝並配置
-- Docker 安裝
-- Node.js 18.x LTS
-- Git 版本控制
-
-### 2. 必要權限
-確保您的 GCP 帳戶具有以下權限：
-- Project Owner 或 Editor
-- Cloud Run Admin
-- Cloud SQL Admin
-- Cloud Storage Admin
-- Cloud Build Admin
-- IAM Admin
-
-## 第一階段：GCP 專案設置
-
-### 1. 建立 GCP 專案
-```bash
-# 建立新專案
-gcloud projects create skincake-gcp-project --name="SkinCake GCP"
-
-# 設置為預設專案
-gcloud config set project skincake-gcp-project
-
-# 啟用計費（需要計費帳戶 ID）
-gcloud billing projects link skincake-gcp-project --billing-account=BILLING_ACCOUNT_ID
+```mermaid
+graph TB
+    A[用戶請求] --> B[Cloudflare CDN/DNS]
+    B --> C[GCP Load Balancer]
+    C --> D[Cloud Run - SkinCake App]
+    D --> E[WordPress API]
+    D --> F[Cloud Build CI/CD]
+    F --> G[Container Registry]
+    
+    H[GitHub Repository] --> I[Auto Deploy Trigger]
+    I --> F
+    
+    J[Static Assets] --> K[Cloudflare CDN]
+    L[Images] --> K
 ```
 
-### 2. 啟用必要的 API
-```bash
-# 啟用所有必要的 API
-gcloud services enable \
-  cloudbuild.googleapis.com \
-  run.googleapis.com \
-  sqladmin.googleapis.com \
-  storage.googleapis.com \
-  container.googleapis.com \
-  cloudresourcemanager.googleapis.com \
-  compute.googleapis.com \
-  monitoring.googleapis.com \
-  logging.googleapis.com \
-  errorreporting.googleapis.com \
-  cloudtrace.googleapis.com \
-  secretmanager.googleapis.com
+---
+
+## ✅ **當前部署狀態**
+
+### 🚀 **生產環境**
+- **服務**: `skincake-app`
+- **平台**: GCP Cloud Run
+- **區域**: `asia-east1` (台灣)
+- **狀態**: ✅ 運行中
+- **版本**: V2.0.0 (2025/07/15)
+
+### 🔄 **自動化 CI/CD**
+- **觸發**: GitHub `main` 分支 push
+- **建置**: Cloud Build (`cloudbuild.yaml`)
+- **部署**: 自動部署到 Cloud Run
+- **狀態**: ✅ 完全自動化
+
+### 📊 **資源配置**
+```yaml
+CPU: 1 vCPU
+Memory: 2GB RAM
+Min Instances: 0
+Max Instances: 100
+Timeout: 300s
+Port: 3000
 ```
 
-### 3. 設置預設區域
-```bash
-# 設置預設區域為亞洲東部
-gcloud config set compute/region asia-east1
-gcloud config set compute/zone asia-east1-a
+---
+
+## 🛠️ **部署設定詳情**
+
+### 1. **Cloud Build 配置** (`cloudbuild.yaml`)
+```yaml
+steps:
+  # Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/skincake-app:$BUILD_ID', '.']
+  
+  # Push to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/skincake-app:$BUILD_ID']
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'skincake-app'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/skincake-app:$BUILD_ID'
+      - '--region'
+      - 'asia-east1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '2Gi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '100'
+      - '--timeout'
+      - '300'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
 ```
 
-## 第二階段：資料庫設置
-
-### 1. 建立 Cloud SQL 實例
-```bash
-# 建立 MySQL 8.0 實例
-gcloud sql instances create skincake-db \
-  --database-version=MYSQL_8_0 \
-  --tier=db-standard-2 \
-  --region=asia-east1 \
-  --storage-size=100GB \
-  --storage-type=SSD \
-  --storage-auto-increase \
-  --backup-start-time=03:00 \
-  --maintenance-window-day=SUN \
-  --maintenance-window-hour=04 \
-  --maintenance-release-channel=production
-```
-
-### 2. 建立資料庫和使用者
-```bash
-# 建立資料庫
-gcloud sql databases create skincake_db --instance=skincake-db
-
-# 建立使用者（請替換為安全密碼）
-gcloud sql users create skincake_user \
-  --instance=skincake-db \
-  --password=YOUR_SECURE_PASSWORD
-
-# 授權 Cloud Run 連接 (重要步驟)
-gcloud projects add-iam-policy-binding skincake-gcp-project \
-    --member="serviceAccount:$(gcloud projects describe skincake-gcp-project --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
-    --role="roles/cloudsql.client"
-```
-
-### 3. 設置 SSL 連接
-```bash
-# 下載 SSL 憑證
-gcloud sql ssl-certs create skincake-client-cert \
-  --instance=skincake-db
-
-# 下載憑證檔案
-gcloud sql ssl-certs describe skincake-client-cert \
-  --instance=skincake-db \
-  --format="get(cert)" > client-cert.pem
-
-gcloud sql instances describe skincake-db \
-  --format="get(serverCaCert.cert)" > server-ca.pem
-```
-
-## 第三階段：檔案儲存設置
-
-### 1. 建立 Cloud Storage 儲存桶
-```bash
-# 建立靜態資源儲存桶
-gsutil mb -p skincake-gcp-project -c STANDARD -l asia-east1 gs://skincake-static-assets
-
-# 建立媒體檔案儲存桶
-gsutil mb -p skincake-gcp-project -c STANDARD -l asia-east1 gs://skincake-media-uploads
-
-# 建立備份儲存桶
-gsutil mb -p skincake-gcp-project -c NEARLINE -l asia-east1 gs://skincake-backups
-```
-
-### 2. 設置 CORS 政策
-```bash
-# 建立 CORS 配置檔案
-cat > cors.json << EOF
-[
-  {
-    "origin": ["https://skincake-app-xxx-as.a.run.app", "https://skincake.tw"],
-    "method": ["GET", "POST", "PUT", "DELETE"],
-    "responseHeader": ["Content-Type", "Authorization"],
-    "maxAgeSeconds": 3600
-  }
-]
-EOF
-
-# 應用 CORS 設置
-gsutil cors set cors.json gs://skincake-static-assets
-gsutil cors set cors.json gs://skincake-media-uploads
-```
-
-### 3. 設置生命週期管理
-```bash
-# 建立生命週期配置
-cat > lifecycle.json << EOF
-{
-  "lifecycle": {
-    "rule": [
-      {
-        "action": {"type": "SetStorageClass", "storageClass": "NEARLINE"},
-        "condition": {"age": 30}
-      },
-      {
-        "action": {"type": "SetStorageClass", "storageClass": "COLDLINE"},
-        "condition": {"age": 90}
-      },
-      {
-        "action": {"type": "Delete"},
-        "condition": {"age": 365}
-      }
-    ]
-  }
-}
-EOF
-
-# 應用生命週期規則
-gsutil lifecycle set lifecycle.json gs://skincake-static-assets
-```
-
-## 第四階段：快取設置
-
-### 1. 建立 Memorystore Redis 實例
-```bash
-# 建立 Redis 實例
-gcloud redis instances create skincake-cache \
-  --size=1 \
-  --region=asia-east1 \
-  --redis-version=redis_6_x \
-  --tier=standard \
-  --transit-encryption-mode=SERVER_AUTHENTICATION
-```
-
-### 2. 獲取 Redis 連接資訊
-```bash
-# 獲取 Redis 主機和埠
-gcloud redis instances describe skincake-cache \
-  --region=asia-east1 \
-  --format="get(host,port)"
-```
-
-## 第五階段：Secret Manager 設置
-
-### 1. 建立機密資料
-```bash
-# 建立資料庫連接字串
-echo "mysql://skincake_user:YOUR_SECURE_PASSWORD@/skincake_db?host=/cloudsql/skincake-gcp-project:asia-east1:skincake-db" | \
-gcloud secrets create db-connection-string --data-file=-
-
-# 建立 Redis 連接字串
-echo "redis://REDIS_HOST:6379" | \
-gcloud secrets create redis-connection-string --data-file=-
-
-# 建立 API 金鑰
-cat > api-keys.json << EOF
-{
-  "wordpress_api_url": "https://skincake.online/wp-json/wp/v2",
-  "google_maps_api_key": "YOUR_GOOGLE_MAPS_API_KEY",
-  "google_analytics_id": "YOUR_GA4_ID"
-}
-EOF
-
-gcloud secrets create api-keys --data-file=api-keys.json
-```
-
-### 2. 設置 IAM 權限
-```bash
-# 為 Cloud Run 服務帳戶授予 Secret Manager 存取權限
-gcloud projects add-iam-policy-binding skincake-gcp-project \
-  --member="serviceAccount:skincake-app@skincake-gcp-project.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
-```
-
-## 第六階段：應用程式部署
-
-### 1. 準備應用程式代碼
-```bash
-# 克隆專案
-git clone https://github.com/your-username/skincake-gcp.git
-cd skincake-gcp
-
-# 安裝依賴
-npm install
-
-# 建立環境配置檔案
-cat > .env.production << EOF
-NODE_ENV=production
-DATABASE_URL=mysql://skincake_user:YOUR_SECURE_PASSWORD@/skincake_db?host=/cloudsql/skincake-gcp-project:asia-east1:skincake-db
-REDIS_URL=redis://REDIS_HOST:6379
-WORDPRESS_API_URL=https://skincake.online/wp-json/wp/v2
-GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
-GOOGLE_ANALYTICS_ID=YOUR_GA4_ID
-EOF
-```
-
-### 2. 建立 Dockerfile
+### 2. **Dockerfile 優化**
 ```dockerfile
-# Dockerfile
 FROM node:18-alpine AS base
 
-# 安裝依賴
+# Install dependencies
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev
 
-# 建構應用程式
+# Build application
 FROM base AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -266,334 +111,436 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# 生產環境
+# Production image
 FROM base AS runner
 WORKDIR /app
-
 ENV NODE_ENV production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
+# Copy built application
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
 
 EXPOSE 3000
-
 ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]
 ```
 
-### 3. 建立 Cloud Build 配置
-```yaml
-# cloudbuild.yaml
-steps:
-  # 建構 Docker 映像
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build',
-      '-t', 'gcr.io/$PROJECT_ID/skincake-app:$COMMIT_SHA',
-      '-t', 'gcr.io/$PROJECT_ID/skincake-app:latest',
-      '.'
-    ]
+### 3. **環境變數配置**
+```bash
+# Next.js 配置
+NODE_ENV=production
+NEXT_TELEMETRY_DISABLED=1
 
-  # 推送映像到 Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/skincake-app:$COMMIT_SHA']
+# WordPress API
+WORDPRESS_API_URL=https://skincake.online/wp-json/wp/v2
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/skincake-app:latest']
-
-  # 部署到 Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args: [
-      'run', 'deploy', 'skincake-app',
-      '--image', 'gcr.io/$PROJECT_ID/skincake-app:$COMMIT_SHA',
-      '--region', 'asia-east1',
-      '--platform', 'managed',
-      '--no-allow-unauthenticated', # <--- 重要：改為不允許公開訪問
-      '--ingress', 'internal-and-cloud-load-balancing', # <--- 重要：限制入口
-      '--memory', '2Gi',
-      '--cpu', '1',
-      '--min-instances', '1',
-      '--max-instances', '100',
-      '--set-cloudsql-instances', 'skincake-gcp-project:asia-east1:skincake-db',
-      '--set-env-vars', 'NODE_ENV=production',
-      '--set-secrets', 'DATABASE_URL=db-connection-string:latest,REDIS_URL=redis-connection-string:latest'
-    ]
-
-# 設置觸發器
-trigger:
-  branch: '^main$'
-
-# 設置替代變數
-substitutions:
-  _SERVICE_NAME: skincake-app
-  _REGION: asia-east1
-
-# 設置超時
-timeout: 1200s
+# 監控配置
+GOOGLE_CLOUD_PROJECT=your-project-id
 ```
 
-### 4. 執行部署
-```bash
-# 使用 Cloud Build 部署
-gcloud builds submit --config cloudbuild.yaml .
+---
 
-# 或直接使用 gcloud 部署
+## 💰 **成本優化 - Cloudflare 混合方案**
+
+### 🌐 **Phase 1: Cloudflare 基礎整合**
+
+#### DNS 與 SSL 設定
+```bash
+# 1. 在 Cloudflare 新增域名
+# 2. 更新 Nameservers 到 Cloudflare
+# 3. 設定 CNAME 記錄
+your-domain.com CNAME skincake-app-xxxx.a.run.app
+
+# 4. 啟用 SSL/TLS (Full Strict)
+# 5. 開啟 Auto HTTPS Rewrites
+```
+
+#### CDN 快取規則
+```javascript
+// Cloudflare Page Rules
+Rule 1: /_next/static/* 
+  - Cache Level: Cache Everything
+  - Edge Cache TTL: 1 month
+  - Browser Cache TTL: 1 month
+
+Rule 2: /images/*
+  - Cache Level: Cache Everything  
+  - Edge Cache TTL: 1 week
+  - Browser Cache TTL: 1 week
+
+Rule 3: /api/*
+  - Cache Level: Bypass
+```
+
+### 🚀 **Phase 2: Workers 快取優化**
+
+#### WordPress API 快取 Worker
+```javascript
+// cloudflare-worker.js
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
+
+async function handleRequest(request) {
+  const cache = caches.default
+  const cacheKey = new Request(request.url, request)
+  
+  // 檢查快取
+  let response = await cache.match(cacheKey)
+  
+  if (!response) {
+    // 快取未命中，從源伺服器獲取
+    response = await fetch(request)
+    
+    // 只快取 GET 請求且狀態為 200
+    if (request.method === 'GET' && response.status === 200) {
+      response = new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          ...response.headers,
+          'Cache-Control': 'public, max-age=300', // 5分鐘快取
+          'CF-Cache-Status': 'MISS'
+        }
+      })
+      
+      event.waitUntil(cache.put(cacheKey, response.clone()))
+    }
+  } else {
+    // 快取命中
+    response = new Response(response.body, {
+      ...response,
+      headers: {
+        ...response.headers,
+        'CF-Cache-Status': 'HIT'
+      }
+    })
+  }
+  
+  return response
+}
+```
+
+### 💡 **Phase 3: 圖片優化**
+
+#### Cloudflare Images 整合
+```typescript
+// lib/image-optimizer.ts
+export function getOptimizedImageUrl(
+  originalUrl: string,
+  width?: number,
+  height?: number,
+  format: 'webp' | 'avif' | 'auto' = 'auto'
+): string {
+  const cfImageUrl = `https://imagedelivery.net/${ACCOUNT_HASH}/${IMAGE_ID}`
+  
+  const params = new URLSearchParams()
+  if (width) params.set('w', width.toString())
+  if (height) params.set('h', height.toString())
+  params.set('f', format)
+  params.set('q', '85') // 品質 85%
+  
+  return `${cfImageUrl}?${params.toString()}`
+}
+```
+
+---
+
+## 📊 **監控與維護**
+
+### 🔍 **監控指標**
+
+#### Cloud Run 監控
+```bash
+# CPU 使用率
+gcloud monitoring metrics list --filter="metric.type:run.googleapis.com/container/cpu/utilizations"
+
+# 記憶體使用率  
+gcloud monitoring metrics list --filter="metric.type:run.googleapis.com/container/memory/utilizations"
+
+# 請求計數
+gcloud monitoring metrics list --filter="metric.type:run.googleapis.com/request_count"
+```
+
+#### Cloudflare Analytics
+- **頻寬節省**: 追蹤 CDN 命中率
+- **性能改善**: 測量全球延遲改善
+- **安全統計**: 阻擋的威脅數量
+
+### 🚨 **告警設定**
+```yaml
+# Cloud Monitoring 告警
+alertPolicy:
+  displayName: "SkinCake High CPU Usage"
+  conditions:
+    - displayName: "CPU utilization high"
+      conditionThreshold:
+        filter: 'resource.type="cloud_run_revision"'
+        comparison: COMPARISON_GT
+        thresholdValue: 0.8
+        duration: "300s"
+  notificationChannels:
+    - "projects/PROJECT_ID/notificationChannels/CHANNEL_ID"
+```
+
+---
+
+## 🔄 **部署流程詳解**
+
+### 📝 **標準部署步驟**
+
+#### 1. 代碼提交觸發
+```bash
+# 本地開發完成後
+git add .
+git commit -m "feat: implement new feature"
+git push origin main
+
+# 自動觸發 Cloud Build
+# ✅ 建置 Docker image
+# ✅ 推送到 Container Registry  
+# ✅ 部署到 Cloud Run
+# ✅ 健康檢查通過
+```
+
+#### 2. 手動部署 (緊急情況)
+```bash
+# 建置並推送 image
+gcloud builds submit --tag gcr.io/PROJECT_ID/skincake-app
+
+# 部署到 Cloud Run
 gcloud run deploy skincake-app \
-  --source . \
+  --image gcr.io/PROJECT_ID/skincake-app \
   --region asia-east1 \
   --platform managed \
-  --no-allow-unauthenticated \
-  --ingress internal-and-cloud-load-balancing \
+  --allow-unauthenticated \
   --memory 2Gi \
-  --cpu 1 \
-  --min-instances 1 \
-  --max-instances 100 \
-  --set-cloudsql-instances skincake-gcp-project:asia-east1:skincake-db
+  --cpu 1
 ```
 
-## 第七階段：Cloudflare 整合
-
-### 1. 獲取 Cloud Run URL
-部署完成後，獲取您的 Cloud Run 服務 URL。它看起來像這樣： `https://skincake-app-xxxxxxxxxx-an.a.run.app`
-
-### 2. 在 Cloudflare 中設置 DNS
-1.  登入您的 Cloudflare 儀表板。
-2.  選擇您的網域 (`skincake.tw`)。
-3.  進入 **DNS** 設置頁面。
-4.  創建一個 `CNAME` 記錄：
-    - **類型**: `CNAME`
-    - **名稱**: `www` (或其他子域名，或 `@` 代表根域名)
-    - **目標**: 您的 Cloud Run 服務 URL (`skincake-app-xxxxxxxxxx-an.a.run.app`)
-    - **Proxy 狀態**: **Proxied** (橘色雲朵)，這會啟用 Cloudflare 的 CDN 和安全功能。
-    - **TTL**: Auto
-
-### 3. 配置 SSL/TLS
-1.  在 Cloudflare 儀表板中，進入 **SSL/TLS** 頁面。
-2.  將加密模式設置為 **Full (Strict)**。這確保從瀏覽器到 Cloudflare，再到您的 GCP 後端的全程加密。
-
-### 4. 建立 WAF 規則（推薦）
-1.  進入 **Security** -> **WAF** 頁面。
-2.  啟用 Cloudflare 的托管規則集，以防禦常見的網路攻擊 (如 SQL Injection, XSS)。
-
-### 5. 建立 Page Rule 優化性能
-1.  進入 **Rules** -> **Page Rules** 頁面。
-2.  為您的網站創建規則，例如：
-    - **URL**: `skincake.tw/assets/*`
-    - **設置**: `Cache Level: Cache Everything`, `Edge Cache TTL: a month`
-    - **URL**: `skincake.tw/blog/*`
-    - **設置**: `Cache Level: Cache Everything`, `Browser Cache TTL: 4 hours`, `Edge Cache TTL: 1 day`
-
-## 第八階段：監控設置
-
-### 1. 設置 Cloud Monitoring
+#### 3. 回滾部署
 ```bash
-# 建立通知通道（電子郵件）
-gcloud alpha monitoring channels create \
-  --display-name="SkinCake Alerts" \
-  --type=email \
-  --channel-labels=email_address=your-email@example.com
+# 查看歷史版本
+gcloud run revisions list --service=skincake-app --region=asia-east1
 
-# 建立警報政策
-gcloud alpha monitoring policies create \
-  --policy-from-file=monitoring-policy.yaml
+# 回滾到特定版本
+gcloud run services update-traffic skincake-app \
+  --to-revisions=REVISION_NAME=100 \
+  --region=asia-east1
 ```
 
-### 2. 建立監控政策檔案
-```yaml
-# monitoring-policy.yaml
-displayName: "SkinCake High Error Rate"
-conditions:
-  - displayName: "Error rate too high"
-    conditionThreshold:
-      filter: 'resource.type="cloud_run_revision" resource.label.service_name="skincake-app"'
-      comparison: COMPARISON_GREATER_THAN
-      thresholdValue: 0.05
-      duration: 300s
-      aggregations:
-        - alignmentPeriod: 60s
-          perSeriesAligner: ALIGN_RATE
-          crossSeriesReducer: REDUCE_MEAN
-notificationChannels:
-  - projects/skincake-gcp-project/notificationChannels/NOTIFICATION_CHANNEL_ID
-```
+---
 
-### 3. 設置 Cloud Logging
+## 🛡️ **安全性配置**
+
+### 🔐 **GCP 安全設定**
+
+#### IAM 權限管理
 ```bash
-# 建立日誌接收器
-gcloud logging sinks create skincake-error-sink \
-  bigquery.googleapis.com/projects/skincake-gcp-project/datasets/skincake_logs \
-  --log-filter='resource.type="cloud_run_revision" severity>=ERROR'
+# Cloud Run 服務帳戶
+gcloud iam service-accounts create skincake-service-account \
+  --description="SkinCake Cloud Run service account" \
+  --display-name="SkinCake Service Account"
+
+# 分配最小權限
+gcloud projects add-iam-policy-binding PROJECT_ID \
+  --member="serviceAccount:skincake-service-account@PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/run.invoker"
 ```
 
-## 第九階段：安全性設置
-
-### 1. 設置 Cloud Armor (可選，由 Cloudflare WAF 取代)
-Cloudflare WAF 提供了強大的保護。如果您需要額外的應用層防護或與 GCP 其他服務的深度整合，可以考慮啟用 Cloud Armor。對於大多數情況，Cloudflare 的保護已足夠。
-
-### 2. 設置 IAM 權限
+#### Secret Manager 整合
 ```bash
-# 建立自訂角色
-gcloud iam roles create skincakeAppRole \
-  --project skincake-gcp-project \
-  --title "SkinCake App Role" \
-  --description "Custom role for SkinCake application" \
-  --permissions cloudsql.instances.connect,secretmanager.versions.access,storage.objects.get
+# 建立機密
+gcloud secrets create wordpress-api-key --data-file=api-key.txt
 
-# 為 Cloud Run 服務帳戶授予權限
-gcloud projects add-iam-policy-binding skincake-gcp-project \
-  --member="serviceAccount:skincake-app@skincake-gcp-project.iam.gserviceaccount.com" \
-  --role="projects/skincake-gcp-project/roles/skincakeAppRole"
+# 授權 Cloud Run 存取
+gcloud secrets add-iam-policy-binding wordpress-api-key \
+  --member="serviceAccount:skincake-service-account@PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
 ```
 
-## 第十階段：域名設置
+### 🛡️ **Cloudflare 安全功能**
 
-### 1. 設置自訂域名
-```bash
-# 將自訂域名映射到 Cloud Run 服務
-gcloud run domain-mappings create \
-  --service skincake-app \
-  --domain skincake.tw \
-  --region asia-east1
+#### WAF 規則配置
+```javascript
+// 自定義 WAF 規則
+Rule 1: Block malicious requests
+  - Expression: (http.request.uri contains "wp-admin")
+  - Action: Block
+
+Rule 2: Rate limiting  
+  - Expression: (http.request.uri.path eq "/api/")
+  - Action: Rate limit (10 req/min)
+
+Rule 3: Geo blocking
+  - Expression: (ip.geoip.country ne "TW" and ip.geoip.country ne "US")
+  - Action: Challenge (CAPTCHA)
 ```
 
-### 2. 設置 DNS 記錄
-```bash
-# 獲取 DNS 記錄資訊
-gcloud run domain-mappings describe \
-  --domain skincake.tw \
-  --region asia-east1
+---
+
+## 📈 **性能優化策略**
+
+### ⚡ **建置優化**
+
+#### Next.js 配置優化
+```javascript
+// next.config.js
+module.exports = {
+  output: 'standalone',
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'skincake.online',
+      },
+      {
+        protocol: 'https', 
+        hostname: 'imagedelivery.net',
+      }
+    ],
+    formats: ['image/avif', 'image/webp'],
+  },
+  experimental: {
+    optimizeCss: true,
+    optimizeServerReact: true,
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  }
+}
 ```
 
-> **注意**: 由於流量現在通過 Cloudflare 代理，您不再需要 Google Cloud Load Balancer，這簡化了架構並可能降低成本。Cloud Run 的自訂域名映射也可以直接由 Cloudflare 的 DNS 設置取代。
-
-## 部署後檢查
-
-### 1. 驗證服務狀態
+#### Bundle 分析
 ```bash
-# 檢查 Cloud Run 服務
-gcloud run services describe skincake-app --region asia-east1
+# 安裝分析工具
+npm install --save-dev @next/bundle-analyzer
 
-# 檢查 Cloud SQL 實例
-gcloud sql instances describe skincake-db
-
-# 檢查 Redis 實例
-gcloud redis instances describe skincake-cache --region asia-east1
+# 分析 bundle 大小
+npm run build
+npm run analyze
 ```
 
-### 2. 測試應用程式
-```bash
-# 測試 HTTP 回應 (現在應通過您的域名)
-curl -I https://www.skincake.tw
+### 🚀 **Runtime 優化**
 
-# 測試 API 端點
-curl https://www.skincake.tw/api/health
+#### 預載入策略
+```typescript
+// components/Layout.tsx
+import Link from 'next/link'
 
-# 測試資料庫連接
-curl https://www.skincake.tw/api/db-status
+export default function Layout({ children }) {
+  return (
+    <>
+      {/* 預載入關鍵頁面 */}
+      <Link href="/blog" prefetch={true}>
+        部落格
+      </Link>
+      <Link href="/category" prefetch={true}>
+        分類
+      </Link>
+      {children}
+    </>
+  )
+}
 ```
 
-### 3. 檢查監控指標
+---
+
+## 🔧 **故障排除指南**
+
+### 🚨 **常見問題處理**
+
+#### 1. 部署失敗
 ```bash
-# 查看 Cloud Run 指標
-gcloud run services describe skincake-app --region asia-east1 --format="get(status)"
-
-# 查看日誌
-gcloud run logs tail skincake-app --region asia-east1
-
-# 查看錯誤報告
-gcloud error-reporting events list --service skincake-app
-```
-
-## 維護操作
-
-### 1. 更新應用程式
-```bash
-# 重新部署
-gcloud builds submit --config cloudbuild.yaml .
-
-# 檢查部署狀態
-gcloud run revisions list --service skincake-app --region asia-east1
-```
-
-### 2. 擴展資源
-```bash
-# 更新 Cloud Run 設置
-gcloud run services update skincake-app \
-  --region asia-east1 \
-  --memory 4Gi \
-  --cpu 2 \
-  --max-instances 200
-
-# 擴展 Cloud SQL 實例
-gcloud sql instances patch skincake-db \
-  --tier db-standard-4
-```
-
-### 3. 備份與恢復
-```bash
-# 建立 Cloud SQL 備份
-gcloud sql backups create --instance skincake-db
-
-# 匯出資料庫
-gcloud sql export sql skincake-db gs://skincake-backups/db-backup-$(date +%Y%m%d).sql \
-  --database skincake_db
-
-# 從備份恢復
-gcloud sql backups restore BACKUP_ID \
-  --restore-instance skincake-db
-```
-
-## 故障排除
-
-### 1. 常見問題
-- **部署失敗**：檢查 Cloud Build 日誌
-- **資料庫連接失敗**：驗證 Cloud SQL 權限和網路設置
-- **高延遲**：檢查 CDN 快取設置和資料庫查詢
-- **記憶體不足**：增加 Cloud Run 記憶體限制
-
-### 2. 除錯指令
-```bash
-# 查看 Cloud Build 日誌
+# 檢查 Cloud Build 日誌
+gcloud builds list --limit=5
 gcloud builds log BUILD_ID
 
-# 查看 Cloud Run 日誌
-gcloud run logs read skincake-app --region asia-east1
-
-# 查看 Cloud SQL 日誌
-gcloud sql operations list --instance skincake-db
-
-# 連接到 Cloud SQL
-gcloud sql connect skincake-db --user skincake_user
+# 檢查 Cloud Run 日誌
+gcloud logs read "resource.type=cloud_run_revision" --limit=50
 ```
 
-## 成本優化
-
-### 1. 監控成本
+#### 2. 記憶體不足
 ```bash
-# 設置預算警報
-gcloud alpha billing budgets create \
-  --billing-account BILLING_ACCOUNT_ID \
-  --display-name "SkinCake Monthly Budget" \
-  --budget-amount 500USD \
-  --threshold-rule threshold-percent=0.8,spend-basis=CURRENT_SPEND
-
-# 查看成本分析
-gcloud billing accounts list
+# 增加記憶體配置
+gcloud run services update skincake-app \
+  --memory 4Gi \
+  --region asia-east1
 ```
 
-### 2. 優化建議
-- 使用 Cloud Run 最小實例數為 1
-- 設置 Cloud SQL 自動暫停
-- 使用 Cloud Storage 生命週期管理
-- 定期審查未使用的資源
+#### 3. WordPress API 連線問題
+```typescript
+// lib/wordpress-api.ts 錯誤處理
+async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'SkinCake/2.0' },
+        next: { revalidate: 300 } // 5分鐘快取
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+      
+      return response
+    } catch (error) {
+      if (i === retries - 1) throw error
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+```
 
-## 結語
+---
 
-這個部署指南提供了在 GCP 上部署 SkinCake 應用程式的完整流程。通過遵循這些步驟，您可以建立一個高可用性、可擴展且安全的生產環境。記住定期監控系統狀態並根據需要調整資源配置。 
+## 📋 **維護檢查清單**
+
+### 🔄 **每日檢查**
+- [ ] Cloud Run 服務狀態正常
+- [ ] 錯誤日誌檢查 (< 1% 錯誤率)
+- [ ] Cloudflare 快取命中率 (> 90%)
+- [ ] 網站載入速度 (< 2秒)
+
+### 📊 **每週檢查** 
+- [ ] GCP 費用監控
+- [ ] 安全掃描報告
+- [ ] 性能指標趨勢
+- [ ] 備份驗證
+
+### 🔧 **每月維護**
+- [ ] 依賴套件更新
+- [ ] 安全補丁檢查  
+- [ ] 快取策略優化
+- [ ] 容量規劃評估
+
+---
+
+## 🎯 **下一步優化計劃**
+
+### 🚀 **短期目標** (2025/07/18-07/25)
+1. **完成 Cloudflare Workers 快取**
+2. **實施圖片優化服務**
+3. **設定完整監控告警**
+4. **優化 Core Web Vitals**
+
+### 🌟 **中期目標** (2025/08/01-08/15)
+1. **多區域部署** (asia-northeast1 備援)
+2. **CI/CD 流程完善** (自動測試、段階部署)
+3. **災難恢復計劃** (RTO < 1小時)
+4. **性能基準測試** (壓力測試)
+
+---
+
+<div align="center">
+
+**🎉 SkinCake V2.0.0 - 已成功部署到生產環境**
+
+*GCP Cloud Run + Cloudflare CDN 混合雲架構*
+
+**下一個里程碑**: 完成 Cloudflare 深度整合，實現 60% 成本節省 💰
+
+</div> 

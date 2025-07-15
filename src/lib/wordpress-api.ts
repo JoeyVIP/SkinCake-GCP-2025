@@ -82,10 +82,15 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
 
 export async function getAllPosts(): Promise<WPPost[]> {
   try {
-    // 減少per_page以避免快取錯誤，並且不嵌入_embed資料
+    // 進一步減少資料量以避免快取錯誤
+    // 只獲取必要的欄位用於 generateStaticParams
     const response = await fetch(
-      `${API_BASE}/posts?per_page=50&status=publish&_fields=id,slug,title,date`,
-      { next: { revalidate: 7200 } }
+      `${API_BASE}/posts?per_page=30&status=publish&_fields=id,slug`,
+      { 
+        next: { revalidate: 7200 },
+        // 使用 no-store 避免快取限制
+        cache: 'no-store'
+      }
     );
     
     if (!response.ok) {

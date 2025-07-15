@@ -74,6 +74,9 @@ export default function Carousel() {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }}
+              onError={(e) => {
+                console.error('Carousel image failed to load:', slide.image);
+              }}
             />
           ))}
         </div>
