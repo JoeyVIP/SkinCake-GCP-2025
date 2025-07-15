@@ -43,99 +43,214 @@ export interface WPTag {
 
 const API_BASE = process.env.WORDPRESS_API_URL || 'https://skincake.online/wp-json/wp/v2';
 
+// GCP 環境檢測
+const isCloudRun = process.env.K_SERVICE !== undefined;
+
+// 創建標準化的請求標頭 - GCP 優化
+function createFetchHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'User-Agent': 'SkinCake/2.0 (Next.js)'
+  };
+
+  // GCP Cloud Run 環境特殊標頭
+  if (isCloudRun) {
+    headers['X-Source'] = 'gcp-cloud-run';
+    headers['X-Client'] = 'skincake-app';
+    headers['X-Environment'] = 'production';
+  }
+
+  return headers;
+}
+
+// 帶重試機制的 fetch 函數
+async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 2): Promise<Response> {
+  const baseOptions: RequestInit = {
+    ...options,
+    headers: {
+      ...createFetchHeaders(),
+      ...options.headers
+    }
+  };
+
+  for (let attempt = 1; attempt <= retries + 1; attempt++) {
+    try {
+      const response = await fetch(url, baseOptions);
+      
+      if (!response.ok) {
+        const errorDetails = {
+          status: response.status,
+          statusText: response.statusText,
+          url,
+          attempt,
+          isCloudRun
+        };
+        
+        if (isCloudRun) {
+          console.error('GCP API request failed:', errorDetails);
+        }
+        
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+      
+      return response;
+    } catch (error) {
+      const isLastAttempt = attempt === retries + 1;
+      
+      if (isLastAttempt) {
+        if (isCloudRun) {
+          console.error('GCP API request exhausted retries:', {
+            url,
+            attempts: attempt,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            environment: 'cloud-run'
+          });
+        }
+        throw error;
+      }
+      
+      // 等待後重試
+      const delay = attempt * 1000; // 1s, 2s, 3s...
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      if (isCloudRun) {
+        console.warn(`GCP API retry attempt ${attempt + 1}:`, {
+          url,
+          delay: `${delay}ms`,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+  }
+  
+  throw new Error('This should never be reached');
+}
+
 export async function getRecentPosts(count: number = 6): Promise<WPPost[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_BASE}/posts?per_page=${count}&_embed&status=publish`,
-      { next: { revalidate: 3600 } }
+      { 
+        next: { revalidate: 3600 },
+        cache: 'no-store' // GCP 環境避免快取問題
+      }
     );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts: ${response.statusText}`);
-    }
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching recent posts:', error);
+    if (isCloudRun) {
+      console.error('GCP getRecentPosts failed:', {
+        count,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching recent posts:', error);
+    }
     return [];
   }
 }
 
 export async function getPostBySlug(slug: string): Promise<WPPost | null> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_BASE}/posts?slug=${slug}&_embed&status=publish`,
-      { next: { revalidate: 3600 } }
+      { 
+        next: { revalidate: 3600 },
+        cache: 'no-store'
+      }
     );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch post: ${response.statusText}`);
-    }
     
     const posts = await response.json();
     return posts.length > 0 ? posts[0] : null;
   } catch (error) {
-    console.error('Error fetching post:', error);
+    if (isCloudRun) {
+      console.error('GCP getPostBySlug failed:', {
+        slug,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching post:', error);
+    }
     return null;
   }
 }
 
 export async function getAllPosts(): Promise<WPPost[]> {
   try {
-    // 進一步減少資料量以避免快取錯誤
-    // 只獲取必要的欄位用於 generateStaticParams
-    const response = await fetch(
-      `${API_BASE}/posts?per_page=30&status=publish&_fields=id,slug`,
+    // GCP 環境：進一步減少資料量避免超時
+    const perPage = isCloudRun ? 20 : 30;
+    
+    const response = await fetchWithRetry(
+      `${API_BASE}/posts?per_page=${perPage}&status=publish&_fields=id,slug`,
       { 
         next: { revalidate: 7200 },
-        // 使用 no-store 避免快取限制
         cache: 'no-store'
       }
     );
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch all posts: ${response.statusText}`);
-    }
-    
     return await response.json();
   } catch (error) {
-    console.error('Error fetching all posts:', error);
+    if (isCloudRun) {
+      console.error('GCP getAllPosts failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching all posts:', error);
+    }
     return [];
   }
 }
 
 export async function getCategories(): Promise<WPCategory[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_BASE}/categories?per_page=100&hide_empty=true`,
-      { next: { revalidate: 7200 } }
+      { 
+        next: { revalidate: 7200 },
+        cache: 'no-store'
+      }
     );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch categories: ${response.statusText}`);
-    }
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    if (isCloudRun) {
+      console.error('GCP getCategories failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching categories:', error);
+    }
     return [];
   }
 }
 
 export async function getPostsByCategory(categoryId: number, count: number = 10): Promise<WPPost[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_BASE}/posts?categories=${categoryId}&per_page=${count}&_embed&status=publish`,
-      { next: { revalidate: 3600 } }
+      { 
+        next: { revalidate: 3600 },
+        cache: 'no-store'
+      }
     );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts by category: ${response.statusText}`);
-    }
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching posts by category:', error);
+    if (isCloudRun) {
+      console.error('GCP getPostsByCategory failed:', {
+        categoryId,
+        count,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching posts by category:', error);
+    }
     return [];
   }
 }
@@ -148,14 +263,16 @@ export async function getPostsByCategoryWithPagination(
   order: 'asc' | 'desc' = 'desc'
 ): Promise<{ posts: WPPost[], totalPages: number, total: number }> {
   try {
-    const response = await fetch(
-      `${API_BASE}/posts?categories=${categoryId}&per_page=${perPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish`,
-      { next: { revalidate: 3600 } }
-    );
+    // GCP 環境：減少每頁數量避免超時
+    const actualPerPage = isCloudRun ? Math.min(perPage, 8) : perPage;
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts by category: ${response.statusText}`);
-    }
+    const response = await fetchWithRetry(
+      `${API_BASE}/posts?categories=${categoryId}&per_page=${actualPerPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish`,
+      { 
+        next: { revalidate: 3600 },
+        cache: 'no-store'
+      }
+    );
     
     const posts = await response.json();
     const totalPages = parseInt(response.headers.get('X-WP-TotalPages') || '1');
@@ -163,7 +280,17 @@ export async function getPostsByCategoryWithPagination(
     
     return { posts, totalPages, total };
   } catch (error) {
-    console.error('Error fetching posts by category with pagination:', error);
+    if (isCloudRun) {
+      console.error('GCP getPostsByCategoryWithPagination failed:', {
+        categoryId,
+        page,
+        perPage,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching posts by category with pagination:', error);
+    }
     return { posts: [], totalPages: 0, total: 0 };
   }
 }
@@ -189,61 +316,90 @@ export async function getRelatedCategories(categoryId: number): Promise<WPCatego
     const categories = await getCategories();
     return categories.filter(cat => relatedCategoryIds.has(cat.id));
   } catch (error) {
-    console.error('Error fetching related categories:', error);
+    if (isCloudRun) {
+      console.error('GCP getRelatedCategories failed:', {
+        categoryId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching related categories:', error);
+    }
     return [];
   }
 }
 
 export async function getPostsByTag(tagId: number, count: number = 10): Promise<WPPost[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_BASE}/posts?tags=${tagId}&per_page=${count}&_embed&status=publish`,
-      { next: { revalidate: 3600 } }
+      { 
+        next: { revalidate: 3600 },
+        cache: 'no-store'
+      }
     );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts by tag: ${response.statusText}`);
-    }
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching posts by tag:', error);
+    if (isCloudRun) {
+      console.error('GCP getPostsByTag failed:', {
+        tagId,
+        count,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching posts by tag:', error);
+    }
     return [];
   }
 }
 
 export async function getCategoryById(categoryId: number): Promise<WPCategory | null> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_BASE}/categories/${categoryId}`,
-      { next: { revalidate: 7200 } }
+      { 
+        next: { revalidate: 7200 },
+        cache: 'no-store'
+      }
     );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch category: ${response.statusText}`);
-    }
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching category:', error);
+    if (isCloudRun) {
+      console.error('GCP getCategoryById failed:', {
+        categoryId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching category:', error);
+    }
     return null;
   }
 }
 
 export async function getTags(): Promise<WPTag[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_BASE}/tags?per_page=100&hide_empty=true`,
-      { next: { revalidate: 7200 } }
+      { 
+        next: { revalidate: 7200 },
+        cache: 'no-store'
+      }
     );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tags: ${response.statusText}`);
-    }
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching tags:', error);
+    if (isCloudRun) {
+      console.error('GCP getTags failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching tags:', error);
+    }
     return [];
   }
 }

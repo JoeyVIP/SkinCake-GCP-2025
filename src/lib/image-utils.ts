@@ -17,6 +17,10 @@ const DEFAULT_IMAGES = {
   user: '/images/default-avatar.svg'
 } as const;
 
+// 環境檢測
+const isProduction = process.env.NODE_ENV === 'production';
+const isCloudRun = process.env.K_SERVICE !== undefined; // GCP Cloud Run 環境變數
+
 /**
  * 驗證圖片 URL 是否有效
  */
@@ -36,7 +40,7 @@ export function isValidImageUrl(url: string): boolean {
 }
 
 /**
- * 清理和標準化圖片 URL
+ * 清理和標準化圖片 URL - GCP 環境優化
  */
 export function sanitizeImageUrl(url: string): string {
   if (!url) return '';
@@ -44,7 +48,7 @@ export function sanitizeImageUrl(url: string): string {
   // 移除多餘的空白和換行
   url = url.trim();
   
-  // 確保 HTTPS
+  // 確保 HTTPS (GCP Cloud Run 強制要求)
   if (url.startsWith('http://')) {
     url = url.replace('http://', 'https://');
   }
@@ -54,11 +58,17 @@ export function sanitizeImageUrl(url: string): string {
     url = url.split('?')[0];
   }
   
+  // GCP 環境特殊處理：添加用戶代理參數避免封鎖
+  if (isCloudRun && url.includes('skincake.online')) {
+    const hasParams = url.includes('?');
+    url += `${hasParams ? '&' : '?'}ua=skincake-gcp`;
+  }
+  
   return url;
 }
 
 /**
- * 從 WordPress 媒體物件獲取最佳圖片 URL
+ * 從 WordPress 媒體物件獲取最佳圖片 URL - GCP 優化
  */
 export function getBestImageUrl(media: any): string {
   if (!media) return DEFAULT_IMAGES.article;
@@ -83,7 +93,7 @@ export function getBestImageUrl(media: any): string {
 }
 
 /**
- * 從 WordPress 文章獲取特色圖片
+ * 從 WordPress 文章獲取特色圖片 - GCP 環境優化
  */
 export function getFeaturedImageFromPost(post: any): ImageSource {
   const defaultImage = {
@@ -118,7 +128,7 @@ export function getFeaturedImageFromPost(post: any): ImageSource {
 }
 
 /**
- * 創建帶有錯誤處理的圖片 props
+ * 創建帶有錯誤處理的圖片 props - GCP 環境優化
  */
 export function createImageProps(imageSource: ImageSource, fallback?: string) {
   const finalFallback = fallback || DEFAULT_IMAGES.article;
@@ -129,12 +139,23 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
     onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
       const target = e.target as HTMLImageElement;
       if (target.src !== finalFallback && !target.src.includes('default-post-image.svg')) {
-        console.warn('WordPress image failed to load:', {
-          originalSrc: imageSource.url,
-          failedSrc: target.src,
-          fallback: finalFallback,
-          alt: imageSource.alt
-        });
+        if (isCloudRun) {
+          // GCP 環境：記錄詳細錯誤信息
+          console.error('GCP image load failed:', {
+            originalSrc: imageSource.url,
+            failedSrc: target.src,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            environment: 'cloud-run'
+          });
+        } else {
+          console.warn('Image failed to load:', {
+            originalSrc: imageSource.url,
+            failedSrc: target.src,
+            fallback: finalFallback,
+            alt: imageSource.alt
+          });
+        }
         target.src = finalFallback;
       }
     },
@@ -148,7 +169,7 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
 }
 
 /**
- * 預載圖片並驗證是否可用
+ * 預載圖片並驗證是否可用 - GCP 環境優化
  */
 export function preloadImage(url: string): Promise<boolean> {
   return new Promise((resolve) => {
@@ -160,30 +181,76 @@ export function preloadImage(url: string): Promise<boolean> {
     const img = new Image();
     img.onload = () => resolve(true);
     img.onerror = () => {
-      console.warn('Image preload failed:', url);
+      if (isCloudRun) {
+        console.error('GCP image preload failed:', {
+          url,
+          environment: 'cloud-run',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.warn('Image preload failed:', url);
+      }
       resolve(false);
     };
+    
+    // GCP 環境：設置特殊標頭
+    if (isCloudRun && url.includes('skincake.online')) {
+      img.crossOrigin = 'anonymous';
+    }
+    
     img.src = url;
     
-    // 10秒超時（WordPress 圖片可能比較慢）
+    // GCP 環境：延長超時時間（網路可能較慢）
+    const timeout = isCloudRun ? 15000 : 10000;
     setTimeout(() => {
-      console.warn('Image preload timeout:', url);
+      if (isCloudRun) {
+        console.error('GCP image preload timeout:', {
+          url,
+          timeout: `${timeout}ms`,
+          environment: 'cloud-run'
+        });
+      } else {
+        console.warn('Image preload timeout:', url);
+      }
       resolve(false);
-    }, 10000);
+    }, timeout);
   });
 }
 
 /**
- * 檢查 WordPress 圖片 URL 是否可用
+ * 檢查 WordPress 圖片 URL 是否可用 - GCP 環境優化
  */
 export async function validateWordPressImage(url: string): Promise<boolean> {
   if (!url.includes('skincake.online')) return false;
   
   try {
-    const response = await fetch(url, { method: 'HEAD' });
+    const headers: HeadersInit = {
+      'User-Agent': 'SkinCake/2.0 (GCP Cloud Run)'
+    };
+    
+    // GCP 環境：添加特殊標頭
+    if (isCloudRun) {
+      headers['X-Source'] = 'gcp-cloud-run';
+      headers['X-Client'] = 'skincake-app';
+    }
+    
+    const response = await fetch(url, { 
+      method: 'HEAD',
+      headers
+    });
+    
     return response.ok;
   } catch (error) {
-    console.warn('WordPress image validation failed:', url, error);
+    if (isCloudRun) {
+      console.error('GCP WordPress image validation failed:', {
+        url,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.warn('WordPress image validation failed:', url, error);
+    }
     return false;
   }
 }
