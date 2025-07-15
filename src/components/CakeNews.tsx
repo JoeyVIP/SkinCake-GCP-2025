@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getFeaturedImageFromPost, createImageProps, getImagePlaceholder } from '@/lib/image-utils';
 
 interface Post {
   id: string;
@@ -70,19 +71,24 @@ export default function CakeNews() {
 
       const wpPosts: any[] = await response.json();
       
-      const formattedPosts = wpPosts.map((post: any, index: number) => ({
-        id: `cakenews-${post.id}-${index}`, // 確保唯一ID
-        originalId: post.id,
-        title: post.title.rendered,
-        slug: post.slug,
-        featuredImage: post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '/images/default-post-image.svg',
-        date: new Date(post.date).toLocaleDateString('zh-TW', { 
-          year: 'numeric', 
-          month: '2-digit', 
-          day: '2-digit' 
-        }).replace(/\//g, '.'),
-        category: post._embedded?.['wp:term']?.[0]?.[0]?.name || '未分類'
-      }));
+      const formattedPosts = wpPosts.map((post: any, index: number) => {
+        // 使用新的圖片工具獲取圖片
+        const imageSource = getFeaturedImageFromPost(post);
+
+        return {
+          id: `cakenews-${post.id}-${index}`, // 確保唯一ID
+          originalId: post.id,
+          title: post.title.rendered,
+          slug: post.slug,
+          featuredImage: imageSource.url,
+          date: new Date(post.date).toLocaleDateString('zh-TW', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit' 
+          }).replace(/\//g, '.'),
+          category: post._embedded?.['wp:term']?.[0]?.[0]?.name || '未分類'
+        };
+      });
 
       setPosts(formattedPosts.slice(0, 3));
     } catch (error) {
@@ -109,39 +115,44 @@ export default function CakeNews() {
       <h2 className="text-2xl font-bold mb-2">蛋糕報報</h2>
       <p className="text-gray-600 mb-6">小蛋糕每週推薦，不踩雷的旅韓清單！</p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post) => (
-          <Link
-            key={post.id}
-            href={`/blog/${post.slug}`}
-            className="block group"
-          >
-            <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative w-full h-48">
-                <Image
-                  src={post.featuredImage}
-                  alt={post.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/images/default-post-image.svg';
-                  }}
-                />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2 text-sm text-gray-500">
-                  <span className="px-2 py-1 bg-[#FFE5E9] text-[#FF8599] rounded text-xs">
-                    {post.category}
-                  </span>
-                  <span>{post.date}</span>
+        {posts.map((post) => {
+          const imageProps = createImageProps({
+            url: post.featuredImage,
+            alt: post.title
+          });
+
+          return (
+            <Link
+              key={post.id}
+              href={`/blog/${post.slug}`}
+              className="block group"
+            >
+              <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative w-full h-48">
+                  <Image
+                    {...imageProps}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    placeholder="blur"
+                    blurDataURL={getImagePlaceholder(400, 192)}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
                 </div>
-                <h3 className="font-bold text-gray-800 line-clamp-2 group-hover:text-[#FFA4B3] transition-colors">
-                  {post.title}
-                </h3>
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-2 text-sm text-gray-500">
+                    <span className="px-2 py-1 bg-[#FFE5E9] text-[#FF8599] rounded text-xs">
+                      {post.category}
+                    </span>
+                    <span>{post.date}</span>
+                  </div>
+                  <h3 className="font-bold text-gray-800 line-clamp-2 group-hover:text-[#FFA4B3] transition-colors">
+                    {post.title}
+                  </h3>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

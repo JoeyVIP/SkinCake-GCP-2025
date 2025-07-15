@@ -3,30 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { WPPost } from "@/lib/wordpress-api";
+import { getFeaturedImageFromPost, createImageProps, getImagePlaceholder } from "@/lib/image-utils";
 
 // 暫時使用 any 作為 post 的類型，稍後會用 WPPost 替換
 export default function ArticleCard({ post }: { post: any }) {
-  const featuredMedia = post._embedded?.['wp:featuredmedia']?.[0];
-  const imageUrl = featuredMedia?.source_url || '/images/default-post-image.svg';
+  const imageSource = getFeaturedImageFromPost(post);
+  const imageProps = createImageProps(imageSource);
 
   return (
     <div className="group overflow-hidden rounded-lg border shadow-sm transition-all hover:shadow-md">
       <Link href={`/blog/${post.slug}`} className="block">
         <div className="relative aspect-video">
           <Image
-            src={imageUrl}
-            alt={post.title.rendered || '文章圖片'}
+            {...imageProps}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (target.src !== '/images/default-post-image.svg') {
-                console.log('Article image failed to load, using default:', imageUrl);
-                target.src = '/images/default-post-image.svg';
-              }
-            }}
             placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            blurDataURL={getImagePlaceholder(800, 450)}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
         <div className="p-4">
