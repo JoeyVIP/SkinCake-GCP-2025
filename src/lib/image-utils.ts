@@ -53,15 +53,21 @@ export function sanitizeImageUrl(url: string): string {
     url = url.replace('http://', 'https://');
   }
   
-  // WordPress 特定處理：移除可能的查詢參數
+  // WordPress 特定處理：移除可能的查詢參數，避免圖片優化服務問題
   if (url.includes('skincake.online') && url.includes('?')) {
-    url = url.split('?')[0];
-  }
-  
-  // GCP 環境特殊處理：添加用戶代理參數避免封鎖
-  if (isCloudRun && url.includes('skincake.online')) {
-    const hasParams = url.includes('?');
-    url += `${hasParams ? '&' : '?'}ua=skincake-gcp`;
+    // 保留 WordPress 的尺寸參數，但移除其他可能導致問題的參數
+    const urlObj = new URL(url);
+    const allowedParams = ['w', 'h', 'fit', 'crop'];
+    const newSearchParams = new URLSearchParams();
+    
+    allowedParams.forEach(param => {
+      const value = urlObj.searchParams.get(param);
+      if (value !== null) {
+        newSearchParams.set(param, value);
+      }
+    });
+    
+    url = `${urlObj.origin}${urlObj.pathname}${newSearchParams.toString() ? '?' + newSearchParams.toString() : ''}`;
   }
   
   return url;
@@ -136,6 +142,11 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
   return {
     src: imageSource.url,
     alt: imageSource.alt || '圖片',
+    // GCP 環境：禁用圖片優化相關屬性
+    ...(isCloudRun ? {
+      unoptimized: true, // 強制禁用優化
+      loader: undefined, // 不使用自定義載入器
+    } : {}),
     onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
       const target = e.target as HTMLImageElement;
       if (target.src !== finalFallback && !target.src.includes('default-post-image.svg')) {
@@ -144,7 +155,7 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
           console.error('GCP image load failed:', {
             originalSrc: imageSource.url,
             failedSrc: target.src,
-            userAgent: navigator.userAgent,
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server',
             timestamp: new Date().toISOString(),
             environment: 'cloud-run'
           });
@@ -166,6 +177,25 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
       }
     }
   };
+}
+
+/**
+ * 創建圖片載入占位符 - GCP 環境優化
+ */
+export function getImagePlaceholder(width: number, height: number): string {
+  // 生成一個簡單的 base64 編碼的 SVG 占位符
+  const svg = `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#f3f4f6"/>
+      <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af" text-anchor="middle" dy=".3em">載入中...</text>
+    </svg>
+  `;
+  
+  const base64 = typeof btoa !== 'undefined' 
+    ? btoa(svg) 
+    : Buffer.from(svg).toString('base64');
+    
+  return `data:image/svg+xml;base64,${base64}`;
 }
 
 /**
@@ -253,12 +283,4 @@ export async function validateWordPressImage(url: string): Promise<boolean> {
     }
     return false;
   }
-}
-
-/**
- * 獲取圖片的 base64 placeholder
- */
-export function getImagePlaceholder(width: number = 800, height: number = 600): string {
-  // 使用簡單的 data URI，避免 btoa 編碼問題
-  return `data:image/svg+xml,%3Csvg width='${width}' height='${height}' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-family='Arial' font-size='16'%3E載入中...%3C/text%3E%3C/svg%3E`;
 } 

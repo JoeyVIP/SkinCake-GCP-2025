@@ -9,8 +9,6 @@ const nextConfig = {
     workerThreads: false,
     // 增加靜態生成超時時間
     staticPageGenerationTimeout: 120, // 增加到 120 秒
-    // 啟用 Edge Runtime 優化
-    edgeRuntime: 'experimental-edge',
   },
   
   typescript: {
@@ -46,14 +44,18 @@ const nextConfig = {
         pathname: '/**',
       }
     ],
-    // GCP 環境：使用較保守的圖片配置
-    unoptimized: process.env.K_SERVICE !== undefined, // GCP 環境禁用圖片優化
+    // 🔧 修復：GCP 環境完全禁用圖片優化避免 400 錯誤
+    unoptimized: process.env.K_SERVICE !== undefined || process.env.NODE_ENV === 'production',
     // 支援的圖片格式
     formats: ['image/avif', 'image/webp'],
+    // 圖片載入器配置 - GCP 環境使用自定義載入器
+    ...(process.env.K_SERVICE !== undefined ? {
+      loader: 'custom',
+      loaderFile: './src/lib/image-loader.js'
+    } : {}),
     // 最小快取時間
     minimumCacheTTL: 60,
-    // 增加載入超時時間
-    dangerouslyAllowSVG: false,
+    dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
