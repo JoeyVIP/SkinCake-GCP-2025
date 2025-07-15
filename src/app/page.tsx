@@ -1,10 +1,7 @@
 import React from 'react';
 import Carousel from '@/components/Carousel';
 import CategoryCards from '@/components/CategoryCards';
-import TagCloud from '@/components/TagCloud';
 import AdBanner from '@/components/AdBanner';
-import CakeNews from "@/components/features/CakeNews";
-import WordPressPosts from '@/components/WordPressPosts';
 import BackToTop from '@/components/BackToTop';
 
 export default function HomePage() {
@@ -29,18 +26,15 @@ export default function HomePage() {
         <AdBanner />
       </section>
 
-      {/* 蛋糕報報 */}
-      <section className="container mx-auto px-4 mb-12">
-        <CakeNews />
-      </section>
-
-      {/* 從地區開始探索 */}
+      {/* 暫時隱藏其他組件來測試 */}
       <section className="container mx-auto px-4 mb-12">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800">
-          從地區開始探索
+          蛋糕報報
           <div className="w-20 h-1 bg-pink-500 mx-auto mt-4"></div>
         </h2>
-        <TagCloud />
+        <div className="text-center py-12">
+          <p className="text-gray-600">載入中...</p>
+        </div>
       </section>
 
       {/* 偷偷推薦給你 */}
@@ -50,7 +44,9 @@ export default function HomePage() {
             偷偷推薦給你
             <div className="w-20 h-1 bg-pink-500 mx-auto mt-4"></div>
           </h2>
-          <WordPressPosts />
+          <div className="text-center py-12">
+            <p className="text-gray-600">載入中...</p>
+          </div>
         </div>
       </section>
 

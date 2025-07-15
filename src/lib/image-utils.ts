@@ -155,11 +155,6 @@ export function preloadImage(url: string): Promise<boolean> {
  * 獲取圖片的 base64 placeholder
  */
 export function getImagePlaceholder(width: number = 800, height: number = 600): string {
-  // 簡單的灰色 placeholder
-  return `data:image/svg+xml;base64,${btoa(
-    `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="#f3f4f6"/>
-      <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#9ca3af" font-family="Arial, sans-serif" font-size="16">載入中...</text>
-    </svg>`
-  )}`;
+  // 使用簡單的 data URI，避免 btoa 編碼問題
+  return `data:image/svg+xml,%3Csvg width='${width}' height='${height}' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-family='Arial' font-size='16'%3E載入中...%3C/text%3E%3C/svg%3E`;
 } 
