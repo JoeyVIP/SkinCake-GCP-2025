@@ -49,6 +49,11 @@ export function sanitizeImageUrl(url: string): string {
     url = url.replace('http://', 'https://');
   }
   
+  // WordPress 特定處理：移除可能的查詢參數
+  if (url.includes('skincake.online') && url.includes('?')) {
+    url = url.split('?')[0];
+  }
+  
   return url;
 }
 
@@ -123,9 +128,20 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
     alt: imageSource.alt || '圖片',
     onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
       const target = e.target as HTMLImageElement;
-      if (target.src !== finalFallback) {
-        console.log(`Image failed to load: ${target.src}, using fallback: ${finalFallback}`);
+      if (target.src !== finalFallback && !target.src.includes('default-post-image.svg')) {
+        console.warn('WordPress image failed to load:', {
+          originalSrc: imageSource.url,
+          failedSrc: target.src,
+          fallback: finalFallback,
+          alt: imageSource.alt
+        });
         target.src = finalFallback;
+      }
+    },
+    onLoad: () => {
+      // 成功載入時的可選回調
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Image loaded successfully:', imageSource.url);
       }
     }
   };
@@ -143,12 +159,33 @@ export function preloadImage(url: string): Promise<boolean> {
     
     const img = new Image();
     img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
+    img.onerror = () => {
+      console.warn('Image preload failed:', url);
+      resolve(false);
+    };
     img.src = url;
     
-    // 5秒超時
-    setTimeout(() => resolve(false), 5000);
+    // 10秒超時（WordPress 圖片可能比較慢）
+    setTimeout(() => {
+      console.warn('Image preload timeout:', url);
+      resolve(false);
+    }, 10000);
   });
+}
+
+/**
+ * 檢查 WordPress 圖片 URL 是否可用
+ */
+export async function validateWordPressImage(url: string): Promise<boolean> {
+  if (!url.includes('skincake.online')) return false;
+  
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch (error) {
+    console.warn('WordPress image validation failed:', url, error);
+    return false;
+  }
 }
 
 /**
