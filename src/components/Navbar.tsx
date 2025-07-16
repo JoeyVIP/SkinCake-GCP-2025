@@ -27,7 +27,7 @@ const Navbar = () => {
             <Link href="/">
               <img
                 className="h-10 w-auto"
-                src="https://image-cdn-flare.qdm.cloud/q637a03189bc95/image/data/2024/11/18/8dd12b71f44eae9394331fdfadf5b278.png"
+                src="/images/main_skincake_logo.png"
                 alt="SKIN CAKE Logo"
               />
             </Link>
