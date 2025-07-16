@@ -12,6 +12,17 @@ const noto_sans_tc = Noto_Sans_TC({
 export const metadata: Metadata = {
   title: "SkinCake 肌膚蛋糕 - 韓國美容旅遊資訊",
   description: "探索最新的韓國美容、時尚、旅遊和美食資訊。SkinCake 為您提供最深入的在地報導。",
+  icons: {
+    icon: [
+      { url: '/images/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/images/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/images/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/images/favicon-120x120.png', sizes: '120x120', type: 'image/png' },
+    ],
+    shortcut: '/images/favicon-32x32.png',
+  },
 };
 
 export default function RootLayout({

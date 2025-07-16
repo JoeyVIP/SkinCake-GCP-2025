@@ -22,16 +22,21 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link href="/" className="text-3xl font-bold text-pink-500">
-            SKIN CAKE
+          <Link href="/" className="flex-shrink-0">
+            <img
+              className="h-10 w-auto"
+              src="/images/main_skincake_logo.png"
+              alt="SKIN CAKE Logo"
+            />
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-6">
-            <Link href="/category/1" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
-            <Link href="/category/2" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
-            <Link href="/category/3" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
-            <Link href="/category/4" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
+            <Link href="/category/%E9%9F%93%E7%B3%BB%E7%BE%8E%E5%AE%B9" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
+            <Link href="/category/%E7%BE%8E%E5%A6%9D%E4%BF%9D%E9%A4%8A" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
+            <Link href="/category/%E9%9F%93%E5%9C%8B%E7%BE%8E%E9%A3%9F" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
+            <Link href="/category/%E9%9F%93%E5%9C%8B%E8%B3%BC%E7%89%A9" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
+            <Link href="/category/Cakery" className="text-gray-600 hover:text-pink-500 transition-colors">Cakery</Link>
           </nav>
 
           {/* Search Bar */}
@@ -54,6 +59,15 @@ export default function Header() {
               </button>
             </div>
           </form>
+
+          {/* User Avatar */}
+          <div className="hidden md:flex items-center">
+            <button className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white hover:bg-pink-600 transition-colors">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </button>
+          </div>
 
           {/* Mobile Menu Button */}
           <button 
@@ -96,10 +110,21 @@ export default function Header() {
               </form>
 
               {/* Mobile Navigation Links */}
-              <Link href="/category/1" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
-              <Link href="/category/2" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
-              <Link href="/category/3" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
-              <Link href="/category/4" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
+              <Link href="/category/%E9%9F%93%E7%B3%BB%E7%BE%8E%E5%AE%B9" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
+              <Link href="/category/%E7%BE%8E%E5%A6%9D%E4%BF%9D%E9%A4%8A" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
+              <Link href="/category/%E9%9F%93%E5%9C%8B%E7%BE%8E%E9%A3%9F" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
+              <Link href="/category/%E9%9F%93%E5%9C%8B%E8%B3%BC%E7%89%A9" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
+              <Link href="/category/Cakery" className="text-gray-600 hover:text-pink-500 transition-colors">Cakery</Link>
+              
+              {/* Mobile User Profile */}
+              <div className="pt-4 border-t border-gray-200">
+                <button className="flex items-center space-x-2 text-gray-600 hover:text-pink-500 transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                  <span>登入</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
