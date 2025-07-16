@@ -183,19 +183,35 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
  * 創建圖片載入占位符 - GCP 環境優化
  */
 export function getImagePlaceholder(width: number, height: number): string {
-  // 生成一個簡單的 base64 編碼的 SVG 占位符
+  // 生成一個簡單的 base64 編碼的 SVG 占位符 - 只使用 ASCII 字符避免 btoa 錯誤
   const svg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" fill="#f3f4f6"/>
-      <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af" text-anchor="middle" dy=".3em">載入中...</text>
+      <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af" text-anchor="middle" dy=".3em">Loading...</text>
     </svg>
   `;
   
-  const base64 = typeof btoa !== 'undefined' 
-    ? btoa(svg) 
-    : Buffer.from(svg).toString('base64');
+  try {
+    // 安全的 base64 編碼處理
+    const base64 = typeof btoa !== 'undefined' 
+      ? btoa(encodeURIComponent(svg).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16))))
+      : Buffer.from(svg, 'utf8').toString('base64');
+      
+    return `data:image/svg+xml;base64,${base64}`;
+  } catch (error) {
+    // 如果編碼失敗，返回一個簡單的純色占位符
+    if (isCloudRun) {
+      console.error('GCP placeholder generation failed:', {
+        width,
+        height,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    }
     
-  return `data:image/svg+xml;base64,${base64}`;
+    // 返回一個簡單的 data URL 佔位符
+    return `data:image/svg+xml;charset=utf-8,<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="%23f3f4f6"/></svg>`;
+  }
 }
 
 /**
