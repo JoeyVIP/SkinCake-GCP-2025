@@ -99,11 +99,7 @@ export default function WordPressPosts() {
 
   return (
     <div id="wordpress-posts">
-      <div className="max-w-[1080px] mx-auto px-4 py-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-12">
-          偷偷推薦給你
-          <div className="w-20 h-1 bg-[#FFA4B3] mx-auto mt-4"></div>
-        </h2>
+      <div className="max-w-[1080px] mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="posts-grid">
           {posts.map((post, index) => {
             const imageProps = createImageProps({

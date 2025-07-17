@@ -9,7 +9,7 @@ import BackToTop from '@/components/BackToTop';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-pink-50">
       {/* 輪播圖 */}
       <section>
         <Carousel />
@@ -17,16 +17,11 @@ export default function HomePage() {
 
       {/* SkinCake 精選推薦 */}
       <section className="container mx-auto px-4 mb-12 mt-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-4 text-gray-800">
           SkinCake 精選推薦
           <div className="w-20 h-1 bg-pink-500 mx-auto mt-4"></div>
         </h2>
         <CategoryCards />
-      </section>
-
-      {/* 廣告橫幅 */}
-      <section className="mb-12">
-        <AdBanner />
       </section>
 
       {/* 蛋糕報報 */}
@@ -36,11 +31,12 @@ export default function HomePage() {
 
       {/* 從地區開始探索 */}
       <section className="container mx-auto px-4 mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800">
-          從地區開始探索
-          <div className="w-20 h-1 bg-pink-500 mx-auto mt-4"></div>
-        </h2>
         <TagCloud />
+      </section>
+
+      {/* 廣告橫幅 */}
+      <section className="mb-12">
+        <AdBanner />
       </section>
 
       {/* 偷偷推薦給你 */}

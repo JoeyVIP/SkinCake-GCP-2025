@@ -57,7 +57,7 @@ export default function CategoryCards() {
   ];
 
   return (
-    <div className="max-w-[1080px] mx-auto px-4 py-12">
+    <div className="max-w-[1080px] mx-auto px-4 pt-4 pb-12">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
         {categories.map((category) => (
           <div 
