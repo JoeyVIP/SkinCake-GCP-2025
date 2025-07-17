@@ -151,6 +151,79 @@ const response = await fetch(url, {
 });
 ```
 
+## SEO 架構
+
+### 搜尋引擎優化策略
+
+#### 1. Sitemap 生成
+```typescript
+// next-sitemap.config.js
+module.exports = {
+  siteUrl: 'https://skincake.tw',
+  generateRobotsTxt: true,
+  sitemapSize: 5000,
+  // 動態路由處理
+  additionalPaths: async (config) => {
+    const posts = await fetchAllPosts();
+    return posts.map(post => ({
+      loc: `/blog/${post.slug}`,
+      lastmod: post.modified,
+      priority: 0.7
+    }));
+  }
+}
+```
+
+#### 2. 結構化數據
+- **Article Schema**: 文章頁面 JSON-LD
+- **BreadcrumbList**: 麵包屑導航
+- **Organization**: 網站資訊
+- **WebSite**: 搜尋框架構
+
+#### 3. 預渲染策略
+```typescript
+// 靜態生成 + ISR
+export const revalidate = 3600; // 1 小時
+
+// 預渲染熱門文章
+export async function generateStaticParams() {
+  const posts = await getTopPosts(20);
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
+}
+```
+
+#### 4. 效能優化
+- **圖片優化**: Next.js Image 元件
+- **字體優化**: display: swap
+- **預連接**: preconnect/dns-prefetch
+- **程式碼分割**: 動態載入
+
+### 自動化部署流程
+
+```yaml
+# GitHub Actions 工作流程
+name: Scheduled Rebuild
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每日午夜
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for new posts
+        run: |
+          # 檢查新文章邏輯
+      - name: Trigger deployment
+        if: ${{ env.HAS_NEW_POSTS == 'true' }}
+        run: |
+          # 觸發 Vercel 部署
+```
+
 ## 安全考量
 
 ### 1. API 安全

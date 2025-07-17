@@ -5,6 +5,9 @@ import ShareButtons from '@/components/ShareButtons';
 import BackToTop from '@/components/BackToTop';
 import RandomRelatedPosts from './RandomRelatedPosts';
 import ArticleJsonLd from '@/components/ArticleJsonLd';
+import Image from 'next/image';
+import { getFeaturedImageFromPost, createImageProps } from '@/lib/image-utils';
+import Breadcrumb from '@/components/Breadcrumb';
 
 type Props = {
   params: { slug: string };
@@ -134,6 +137,20 @@ export default async function BlogPost({ params }: Props) {
     const relatedPosts = await getRandomPosts(6, post.id);
     const featuredImage = getFeaturedImageUrl(post);
     const categories = getCategoryNames(post);
+    
+    // 使用 image-utils 取得優化的圖片資訊
+    const imageSource = getFeaturedImageFromPost(post);
+    const imageProps = createImageProps(imageSource);
+    
+    // 建立麵包屑項目
+    const breadcrumbItems = [
+      { name: '首頁', href: '/' },
+      ...(categories.length > 0 
+        ? [{ name: categories[0], href: `/category/${encodeURIComponent(categories[0])}` }]
+        : []
+      ),
+      { name: post.title.rendered }
+    ];
 
     return (
       <>
@@ -147,13 +164,20 @@ export default async function BlogPost({ params }: Props) {
           {/* 文章容器 - 與線上版本完全一致 */}
           <div className="max-w-[800px] mx-auto">
             
+            {/* 麵包屑導航 */}
+            <Breadcrumb items={breadcrumbItems} className="mb-6 px-4" />
+            
             {/* 特色圖片 - 按照線上版本的精確實現 */}
             {featuredImage && (
-              <div className="mb-8">
-                <img 
-                  src={featuredImage} 
-                  alt={post.title.rendered} 
-                  className="w-full h-[400px] object-cover rounded-xl shadow-md"
+              <div className="mb-8 relative w-full h-[400px]">
+                <Image 
+                  src={imageProps.src}
+                  alt={imageProps.alt}
+                  fill
+                  className="object-cover rounded-xl shadow-md"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  quality={85}
                 />
               </div>
             )}

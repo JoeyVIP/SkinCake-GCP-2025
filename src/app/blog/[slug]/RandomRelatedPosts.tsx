@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRandomPosts, getFeaturedImageUrl, getCategoryNames, WPPost } from '@/lib/wordpress-api';
+import { getFeaturedImageFromPost, createImageProps } from '@/lib/image-utils';
 
 interface RandomRelatedPostsProps {
   initialPosts: WPPost[];
@@ -57,6 +59,9 @@ export default function RandomRelatedPosts({ initialPosts, excludeId }: RandomRe
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {relatedPosts.slice(0, 6).map((relatedPost) => {
           const categories = getCategoryNames(relatedPost);
+          const imageSource = getFeaturedImageFromPost(relatedPost);
+          const imageProps = createImageProps(imageSource);
+          
           return (
             <Link
               key={relatedPost.id}
@@ -64,11 +69,15 @@ export default function RandomRelatedPosts({ initialPosts, excludeId }: RandomRe
               className="block group"
             >
               <article className="bg-white rounded-lg shadow-md overflow-hidden transition-shadow duration-300 hover:shadow-xl">
-                <img 
-                  src={getFeaturedImageUrl(relatedPost)} 
-                  alt={relatedPost.title.rendered} 
-                  className="w-full h-48 object-cover"
-                />
+                <div className="relative w-full h-48">
+                  <Image 
+                    src={imageProps.src}
+                    alt={imageProps.alt}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
                 <div className="p-4">
                   {/* 分類標籤 */}
                   {categories.length > 0 && (

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface CarouselSlide {
   title: string;
@@ -69,15 +70,17 @@ export default function Carousel() {
               className={`carousel-slide absolute inset-0 transition-opacity duration-500 ease-in-out ${
                 index === currentSlide ? 'opacity-100' : 'opacity-0'
               }`}
-              style={{
-                backgroundImage: `url(${slide.image})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-              onError={(e) => {
-                console.error('Carousel image failed to load:', slide.image);
-              }}
-            />
+            >
+              <Image
+                src={slide.image}
+                alt={`${slide.title} - ${slide.description}`}
+                fill
+                className="object-cover"
+                priority={index === 0}
+                sizes="100vw"
+                quality={85}
+              />
+            </Link>
           ))}
         </div>
 

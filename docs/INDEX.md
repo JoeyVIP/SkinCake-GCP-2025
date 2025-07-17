@@ -1,70 +1,65 @@
-# SkinCake 文檔索引
+# SkinCake 技術文檔
 
-## 📚 文檔結構總覽
+歡迎來到 SkinCake 肌膚蛋糕的技術文檔！
 
-本文檔提供 SkinCake v2.1.0 的完整文檔導航。
+## 📋 目錄
 
-### 🏠 根目錄文檔
-- [README.md](../README.md) - 專案概覽和快速開始
-- [CHANGELOG.md](../CHANGELOG.md) - 版本更新記錄
+### 開發指南
+- [安裝指南](./guides/installation.md) - 環境設置和初始安裝
+- [開發指南](./guides/development.md) - 本地開發流程
+- [部署指南](./guides/deployment.md) - 部署到生產環境
 
-### 📖 主要文檔
-- [專案總覽](./README.md) - 文檔中心首頁
-- [更新日誌](./CHANGELOG.md) - 詳細版本歷史
-
-### 🎯 使用指南 (/guides)
-- [安裝指南](./guides/installation.md) - 環境設置和依賴安裝
-- [開發指南](./guides/development.md) - 編碼規範和最佳實踐
-- [部署指南](./guides/deployment.md) - 各平台部署方法
-- [配置說明](./guides/configuration.md) - 系統配置詳解
-
-### 🔧 技術文檔 (/technical)
+### 技術文檔
 - [系統架構](./technical/architecture.md) - 整體架構設計
-- [API 參考](./technical/api-reference.md) - WordPress API 文檔
-- [技術棧說明](./technical/tech-stack.md) - 使用的技術詳解
-- [性能優化](./technical/performance.md) - 優化策略指南
+- [API 文檔](./technical/api.md) - WordPress REST API 整合
+- [性能優化](./technical/performance.md) - 效能最佳化策略
 
-### 🛠️ 維護文檔 (/maintenance)
+### 維護指南
 - [故障排除](./maintenance/troubleshooting.md) - 常見問題解決
-- [監控指南](./maintenance/monitoring.md) - 系統監控設置
-- [備份策略](./maintenance/backup.md) - 數據備份方案
+- [更新流程](./maintenance/updates.md) - 系統更新指南
+- [備份策略](./maintenance/backup.md) - 資料備份方案
 
-### 📦 歸檔文檔 (/archive)
-- [V1 版本文檔](../old_web/archive/) - 舊版本歸檔資料
+## 🚀 快速開始
 
-## 🔍 快速查找
+```bash
+# 克隆專案
+git clone https://github.com/your-username/skincake.git
+cd skincake
 
-### 按任務查找
-- **開始新專案**: [安裝指南](./guides/installation.md) → [開發指南](./guides/development.md)
-- **部署上線**: [部署指南](./guides/deployment.md) → [監控指南](./maintenance/monitoring.md)
-- **解決問題**: [故障排除](./maintenance/troubleshooting.md)
-- **了解架構**: [系統架構](./technical/architecture.md) → [技術棧說明](./technical/tech-stack.md)
+# 安裝依賴
+npm install
 
-### 按角色查找
-- **開發者**: [開發指南](./guides/development.md)、[API 參考](./technical/api-reference.md)
-- **運維人員**: [部署指南](./guides/deployment.md)、[監控指南](./maintenance/monitoring.md)
-- **專案經理**: [專案總覽](./README.md)、[更新日誌](./CHANGELOG.md)
+# 啟動開發伺服器
+npm run dev
+```
 
-## 📝 文檔維護
+## 📊 專案狀態
 
-### 更新頻率
-- **CHANGELOG.md**: 每次版本發布
-- **故障排除**: 發現新問題時更新
-- **API 文檔**: API 變更時更新
-- **其他文檔**: 根據需要更新
+- **當前版本**: v2.2.0
+- **Next.js**: 14.x
+- **React**: 18.x
+- **TypeScript**: 5.x
 
-### 貢獻文檔
-1. Fork 專案
-2. 創建文檔分支 `docs/your-update`
-3. 提交 Pull Request
-4. 等待審核合併
+## 🎯 最新更新 (v2.2.0)
 
-## 🔗 相關資源
+### 主要功能
+- ✅ 文章頁面完整修復（樣式、分享、相關文章）
+- ✅ SEO 大幅優化（Sitemap、結構化數據、預渲染）
+- ✅ 效能提升（圖片優化、字體載入、預連接）
 
-- [GitHub Repository](https://github.com/JoeyVIP/SkinCake-GCP-2025)
-- [線上網站](https://skincake.tw)
-- [WordPress API](https://skincake.online/wp-json/wp/v2)
+### 技術亮點
+- 動態 Sitemap 生成
+- 完整 JSON-LD 支援
+- GitHub Actions 自動化
+- Next.js Image 全站優化
+
+## 📞 聯繫方式
+
+如有任何技術問題，請透過以下方式聯繫：
+
+- GitHub Issues: [提交問題](https://github.com/your-username/skincake/issues)
+- Email: tech@skincake.tw
 
 ---
 
-最後更新: 2025-01-17 | 版本: v2.1.0 
+最後更新時間：2025-01-18 
