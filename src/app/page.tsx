@@ -11,12 +11,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 輪播圖 */}
-      <section className="mb-12">
+      <section>
         <Carousel />
       </section>
 
       {/* SkinCake 精選推薦 */}
-      <section className="container mx-auto px-4 mb-12">
+      <section className="container mx-auto px-4 mb-12 mt-12">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800">
           SkinCake 精選推薦
           <div className="w-20 h-1 bg-pink-500 mx-auto mt-4"></div>

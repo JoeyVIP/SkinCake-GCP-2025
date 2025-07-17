@@ -57,7 +57,7 @@ export default function Carousel() {
   };
 
   return (
-    <div className="relative h-[400px] overflow-hidden">
+    <div className="relative h-[400px] w-full overflow-hidden">
       {/* 輪播容器 */}
       <div className="relative h-full">
         {/* 輪播圖片 */}

@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="zh-TW">
       <body className={`${noto_sans_tc.className} flex flex-col min-h-screen`}>
         <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
+        <main className="flex-grow">
           {children}
         </main>
         <Footer />
