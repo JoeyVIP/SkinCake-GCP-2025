@@ -1,0 +1,90 @@
+name: Scheduled Site Rebuild
+
+on:
+  schedule:
+    # 每天早上 9 點（UTC+8 台灣時間）= UTC 1:00
+    - cron: '0 1 * * *'
+  workflow_dispatch: # 允許手動觸發
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: asia-east1
+  SERVICE_NAME: skincake-app
+
+jobs:
+  check-and-rebuild:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Check for new posts
+        id: check_posts
+        run: |
+          # 調用 WordPress API 檢查最新文章日期
+          LATEST_POST=$(curl -s "https://skincake.online/wp-json/wp/v2/posts?per_page=1&orderby=date&order=desc" | jq -r '.[0].date' || echo "2000-01-01")
+          echo "Latest post date: $LATEST_POST"
+          
+          # 讀取上次構建時間（如果存在）
+          if [ -f .last-build-date ]; then
+            LAST_BUILD=$(cat .last-build-date)
+          else
+            LAST_BUILD="2000-01-01"
+          fi
+          echo "Last build date: $LAST_BUILD"
+          
+          # 比較日期
+          if [[ "$LATEST_POST" > "$LAST_BUILD" ]]; then
+            echo "New posts found!"
+            echo "has_new_posts=true" >> $GITHUB_OUTPUT
+            echo "$LATEST_POST" > .last-build-date
+          else
+            echo "No new posts"
+            echo "has_new_posts=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Authenticate to Google Cloud
+        if: steps.check_posts.outputs.has_new_posts == 'true'
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Setup Google Cloud SDK
+        if: steps.check_posts.outputs.has_new_posts == 'true'
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      
+      - name: Configure Docker for GCR
+        if: steps.check_posts.outputs.has_new_posts == 'true'
+        run: |
+          gcloud auth configure-docker gcr.io
+      
+      - name: Trigger Cloud Build
+        if: steps.check_posts.outputs.has_new_posts == 'true'
+        run: |
+          echo "Triggering rebuild..."
+          gcloud builds submit \
+            --config=cloudbuild.yaml \
+            --project=${{ secrets.GCP_PROJECT_ID }}
+      
+      - name: Commit last build date
+        if: steps.check_posts.outputs.has_new_posts == 'true'
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add .last-build-date
+          git commit -m "Update last build date [skip ci]" || echo "No changes to commit"
+          git push || echo "No changes to push"
+      
+      - name: Send notification (optional)
+        if: steps.check_posts.outputs.has_new_posts == 'true'
+        run: |
+          echo "Site rebuilt successfully with new content!"
+          # 可以在這裡添加 Slack、Discord 或 Email 通知 

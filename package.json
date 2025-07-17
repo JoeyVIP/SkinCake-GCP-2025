@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "NODE_ENV=production next build",
+    "postbuild": "next-sitemap",
     "start": "next start -p $PORT",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sitemap": "next-sitemap"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",
@@ -23,6 +25,7 @@
     "@types/node": "^20.19.7",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
+    "next-sitemap": "^4.2.3",
     "tailwindcss": "^3.4.16",
     "typescript": "^5"
   }

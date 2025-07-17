@@ -32,13 +32,16 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
   };
 
   const shareToFacebook = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-    window.open(facebookUrl, '_blank', 'width=600,height=400');
+    // 使用 Facebook 的完整分享 API，包含標題和描述
+    const facebookUrl = `https://www.facebook.com/dialog/share?app_id=1879313576190232&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}&display=popup`;
+    window.open(facebookUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
   };
 
-  const shareToTwitter = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
-    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  const shareToThreads = () => {
+    // Threads 分享 URL（Meta 的新平台）
+    const threadsText = `${title}\n\n${url}`;
+    const threadsUrl = `https://threads.net/intent/post?text=${encodeURIComponent(threadsText)}`;
+    window.open(threadsUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
   };
 
   const shareToLine = () => {
@@ -68,10 +71,10 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
         </button>
         
         <button
-          onClick={shareToTwitter}
-          className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
+          onClick={shareToThreads}
+          className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg transition-colors"
         >
-          Twitter
+          Threads
         </button>
         
         <button

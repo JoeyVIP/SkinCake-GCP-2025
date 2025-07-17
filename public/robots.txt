@@ -1,0 +1,22 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /static/
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+
+# Bingbot
+User-agent: Bingbot
+Allow: /
+
+# Host
+Host: https://skincake.tw
+
+# Sitemaps
+Sitemap: https://skincake.tw/sitemap.xml
+Sitemap: https://skincake.tw/server-sitemap.xml

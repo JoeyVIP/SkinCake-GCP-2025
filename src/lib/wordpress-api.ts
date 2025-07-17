@@ -11,6 +11,7 @@ export interface WPPost {
     rendered: string;
   };
   date: string;
+  modified?: string;
   categories: number[];
   tags: number[];
   featured_media: number;
@@ -158,6 +159,59 @@ export async function getRecentPosts(count: number = 6): Promise<WPPost[]> {
   }
 }
 
+export async function getRandomPosts(count: number = 6, excludeId?: number): Promise<WPPost[]> {
+  try {
+    // 加入時間戳確保每次請求都不同，避免任何形式的快取
+    const timestamp = Date.now();
+    const randomSeed = Math.floor(Math.random() * 10000);
+    
+    // 獲取最新的 100 篇文章（和原始版本一致）
+    const response = await fetchWithRetry(
+      `${API_BASE}/posts?per_page=100&orderby=date&order=desc&_embed&status=publish&_t=${timestamp}&_r=${randomSeed}`,
+      { 
+        // 隨機文章絕對不應該快取
+        cache: 'no-store',
+        // 加入額外的標頭避免快取
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      }
+    );
+    
+    let posts = await response.json();
+    
+    // 排除指定的文章
+    if (excludeId) {
+      posts = posts.filter((post: WPPost) => post.id !== excludeId);
+    }
+    
+    // 使用 Fisher-Yates 洗牌算法（和原始版本完全一致）
+    for (let i = posts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [posts[i], posts[j]] = [posts[j], posts[i]];
+    }
+    
+    // 取前 count 篇
+    return posts.slice(0, count);
+  } catch (error) {
+    if (isCloudRun) {
+      console.error('GCP getRandomPosts failed:', {
+        count,
+        excludeId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching random posts:', error);
+    }
+    
+    // 如果隨機獲取失敗，回退到最新文章
+    return getRecentPosts(count);
+  }
+}
+
 export async function getPostBySlug(slug: string): Promise<WPPost | null> {
   try {
     const response = await fetchWithRetry(
@@ -187,13 +241,13 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
   }
 }
 
-export async function getAllPosts(): Promise<WPPost[]> {
+export async function getAllPosts(page: number = 1, perPage: number = 50): Promise<WPPost[]> {
   try {
     // GCP 環境：大幅減少資料量避免超時，只獲取必要欄位
-    const perPage = isCloudRun ? 15 : 30;
+    const actualPerPage = isCloudRun ? Math.min(perPage, 15) : perPage;
     
     const response = await fetchWithRetry(
-      `${API_BASE}/posts?per_page=${perPage}&status=publish&_fields=id,slug,title,date`,
+      `${API_BASE}/posts?per_page=${actualPerPage}&page=${page}&status=publish&_fields=id,slug,title,date,modified`,
       { 
         // 修復：只使用一種快取策略
         ...(isCloudRun 
@@ -207,6 +261,8 @@ export async function getAllPosts(): Promise<WPPost[]> {
   } catch (error) {
     if (isCloudRun) {
       console.error('GCP getAllPosts failed:', {
+        page,
+        perPage,
         error: error instanceof Error ? error.message : 'Unknown error',
         environment: 'cloud-run'
       });
