@@ -162,6 +162,9 @@ export async function getRecentPosts(count: number = 6): Promise<WPPost[]> {
 
 export async function getRandomPosts(count: number = 6, excludeId?: number): Promise<WPPost[]> {
   try {
+    // 檢測是否在 build 時
+    const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
+    
     // 加入時間戳確保每次請求都不同，避免任何形式的快取
     const timestamp = Date.now();
     const randomSeed = Math.floor(Math.random() * 10000);
@@ -170,14 +173,18 @@ export async function getRandomPosts(count: number = 6, excludeId?: number): Pro
     const response = await fetchWithRetry(
       `${API_BASE}/posts?per_page=100&orderby=date&order=desc&_embed&status=publish&_t=${timestamp}&_r=${randomSeed}`,
       { 
-        // 隨機文章絕對不應該快取
-        cache: 'no-store',
-        // 加入額外的標頭避免快取
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+        // 在 build 時使用 force-cache，運行時使用 no-store
+        ...(isBuildTime ? {
+          cache: 'force-cache',
+          next: { revalidate: 60 } // 1分鐘後重新驗證
+        } : {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        })
       }
     );
     
