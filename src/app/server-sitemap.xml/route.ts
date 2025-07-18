@@ -36,9 +36,8 @@ export async function GET(request: Request) {
     // 獲取所有分類
     const categories = await getCategories()
     const categoryUrls = categories
-      .filter(category => category.count > 0) // 只包含有文章的分類
       .map((category) => ({
-        loc: `${baseUrl}/category/${category.id}`,
+        loc: `${baseUrl}/category/${encodeURIComponent(category.slug)}`,
         lastmod: new Date().toISOString(),
         changefreq: 'weekly' as const,
         priority: 0.8,

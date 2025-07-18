@@ -5,6 +5,7 @@ module.exports = {
   changefreq: 'daily',
   priority: 0.7,
   sitemapSize: 5000,
+  trailingSlash: false,
   generateIndexSitemap: true,
   
   // 排除不需要索引的路徑
@@ -16,7 +17,8 @@ module.exports = {
     '/500',
     '/_app',
     '/_document',
-    '/_error'
+    '/_error',
+    '/server-sitemap.xml',
   ],
   
   // 額外的動態 sitemap
