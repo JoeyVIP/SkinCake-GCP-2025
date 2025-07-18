@@ -7,11 +7,11 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: '韓系美容', href: '/category/%E9%9F%93%E7%B3%BB%E7%BE%8E%E5%AE%B9/' },
-    { name: '美妝保養', href: '/category/%E7%BE%8E%E5%A6%9D%E4%BF%9D%E9%A4%8A/' },
-    { name: '韓國美食', href: '/category/%E9%9F%93%E5%9C%8B%E7%BE%8E%E9%A3%9F/' },
-    { name: '韓國購物', href: '/category/%E9%9F%93%E5%9C%8B%E8%B3%BC%E7%89%A9/' },
-    { name: 'Cakery', href: '/category/Cakery/' },
+    { name: '韓系美容', href: '/category/韓系美容' },
+    { name: '美妝保養', href: '/category/美妝保養' },
+    { name: '韓國美食', href: '/category/韓國美食' },
+    { name: '韓國購物', href: '/category/韓國購物' },
+    { name: 'Cakery', href: '/category/cakery' },
   ];
 
   const toggleMenu = () => {

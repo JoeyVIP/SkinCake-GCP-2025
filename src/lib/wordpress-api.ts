@@ -279,7 +279,7 @@ export async function getAllPosts(page: number = 1, perPage: number = 50): Promi
 export async function getCategories(): Promise<WPCategory[]> {
   try {
     const response = await fetchWithRetry(
-      `${API_BASE}/categories?per_page=50&hide_empty=true&_fields=id,name,slug,count`,
+      `${API_BASE}/categories?per_page=50&hide_empty=false&_fields=id,name,slug,count`,
       { 
         // 修復：生產環境也要有快取
         next: { revalidate: 7200 }, // 2小時快取
@@ -348,7 +348,7 @@ export async function getPostsByCategoryWithPagination(
     const actualPerPage = isCloudRun ? Math.min(perPage, 6) : perPage;
     
     const response = await fetchWithRetry(
-      `${API_BASE}/posts?categories=${categoryId}&per_page=${actualPerPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish`,
+      `${API_BASE}/posts?categories=${categoryId}&per_page=${actualPerPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish&_fields=id,slug,title,date,featured_media,_links,_embedded`,
       { 
         // 修復：生產環境也要有快取
         next: { revalidate: 3600 }, // 1小時快取
@@ -475,6 +475,63 @@ export async function getCategoryById(categoryId: number): Promise<WPCategory | 
   }
 }
 
+export async function getCategoryBySlug(slug: string): Promise<WPCategory | null> {
+  try {
+    const categories = await getCategories();
+    
+    // 先嘗試直接匹配
+    let category = categories.find(cat => cat.slug === slug);
+    
+    // 如果沒找到，嘗試 URL 編碼匹配
+    if (!category) {
+      const encodedSlug = encodeURIComponent(slug);
+      category = categories.find(cat => cat.slug === encodedSlug);
+    }
+    
+    // 如果還沒找到，嘗試解碼後匹配
+    if (!category) {
+      try {
+        const decodedSlug = decodeURIComponent(slug);
+        category = categories.find(cat => cat.name === decodedSlug);
+      } catch (e) {
+        // 解碼失敗，忽略
+      }
+    }
+    
+    return category || null;
+  } catch (error) {
+    if (isCloudRun) {
+      console.error('GCP getCategoryBySlug failed:', {
+        slug,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching category by slug:', error);
+    }
+    return null;
+  }
+}
+
+export async function getCategoriesExcludeUncategorized(): Promise<WPCategory[]> {
+  try {
+    const categories = await getCategories();
+    return categories
+      .filter(cat => cat.slug !== 'uncategorized' && cat.name !== '未分類')
+      .sort((a, b) => a.id - b.id); // 按 ID 排序，方便後台調整順序
+  } catch (error) {
+    if (isCloudRun) {
+      console.error('GCP getCategoriesExcludeUncategorized failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        environment: 'cloud-run'
+      });
+    } else {
+      console.error('Error fetching filtered categories:', error);
+    }
+    return [];
+  }
+}
+
 export async function getTags(): Promise<WPTag[]> {
   try {
     const response = await fetchWithRetry(
@@ -511,7 +568,7 @@ export function getFeaturedImageUrl(post: WPPost): string {
   }
   
   // 使用絕對 URL 作為預設圖片，確保 Facebook 可以正確抓取
-  const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.vip';
+  const baseUrl = 'https://skincake-app-rscfzmo4wa-de.a.run.app';
   return `${baseUrl}/images/default-post-image.svg`;
 }
 

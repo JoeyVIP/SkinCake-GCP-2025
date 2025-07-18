@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const featuredImage = getFeaturedImageUrl(post);
     const categories = getCategoryNames(post);
-    const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.vip';
+    const baseUrl = 'https://skincake-app-rscfzmo4wa-de.a.run.app';
     const postUrl = `${baseUrl}/blog/${post.slug}`;
     
     // 從文章內容中提取純文字作為描述
@@ -149,14 +149,13 @@ export default async function BlogPost({ params }: Props) {
     const imageSource = getFeaturedImageFromPost(post);
     const imageProps = createImageProps(imageSource);
     
-    // 建立麵包屑項目
+    // 麵包屑數據
     const breadcrumbItems = [
       { name: '首頁', href: '/' },
       ...(categories.length > 0 
         ? [{ name: categories[0], href: `/category/${encodeURIComponent(categories[0])}` }]
         : []
       ),
-      { name: post.title.rendered }
     ];
 
     return (
@@ -229,7 +228,7 @@ export default async function BlogPost({ params }: Props) {
           <div className="max-w-[800px] mx-auto mb-8">
             <ShareButtons 
               title={post.title.rendered}
-              url={`${process.env.FRONTEND_DOMAIN || 'https://skincake.vip'}/blog/${post.slug}`}
+              url={`https://skincake-app-rscfzmo4wa-de.a.run.app/blog/${post.slug}`}
             />
           </div>
 

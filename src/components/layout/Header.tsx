@@ -21,11 +21,11 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-6">
-            <Link href="/category/%E9%9F%93%E7%B3%BB%E7%BE%8E%E5%AE%B9" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
-            <Link href="/category/%E7%BE%8E%E5%A6%9D%E4%BF%9D%E9%A4%8A" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
-            <Link href="/category/%E9%9F%93%E5%9C%8B%E7%BE%8E%E9%A3%9F" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
-            <Link href="/category/%E9%9F%93%E5%9C%8B%E8%B3%BC%E7%89%A9" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
-            <Link href="/category/Cakery" className="text-gray-600 hover:text-pink-500 transition-colors">Cakery</Link>
+            <Link href="/category/韓系美容" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
+            <Link href="/category/美妝保養" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
+            <Link href="/category/韓國美食" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
+            <Link href="/category/韓國購物" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
+            <Link href="/category/cakery" className="text-gray-600 hover:text-pink-500 transition-colors">Cakery</Link>
           </nav>
 
 
@@ -61,11 +61,11 @@ export default function Header() {
 
 
               {/* Mobile Navigation Links */}
-              <Link href="/category/%E9%9F%93%E7%B3%BB%E7%BE%8E%E5%AE%B9" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
-              <Link href="/category/%E7%BE%8E%E5%A6%9D%E4%BF%9D%E9%A4%8A" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
-              <Link href="/category/%E9%9F%93%E5%9C%8B%E7%BE%8E%E9%A3%9F" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
-              <Link href="/category/%E9%9F%93%E5%9C%8B%E8%B3%BC%E7%89%A9" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
-              <Link href="/category/Cakery" className="text-gray-600 hover:text-pink-500 transition-colors">Cakery</Link>
+              <Link href="/category/韓系美容" className="text-gray-600 hover:text-pink-500 transition-colors">韓系美容</Link>
+              <Link href="/category/美妝保養" className="text-gray-600 hover:text-pink-500 transition-colors">美妝保養</Link>
+              <Link href="/category/韓國美食" className="text-gray-600 hover:text-pink-500 transition-colors">韓國美食</Link>
+              <Link href="/category/韓國購物" className="text-gray-600 hover:text-pink-500 transition-colors">韓國購物</Link>
+              <Link href="/category/cakery" className="text-gray-600 hover:text-pink-500 transition-colors">Cakery</Link>
               
               {/* Mobile User Profile */}
               <div className="pt-4 border-t border-gray-200">

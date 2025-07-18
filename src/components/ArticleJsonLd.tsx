@@ -7,7 +7,7 @@ interface ArticleJsonLdProps {
 export default function ArticleJsonLd({ post }: ArticleJsonLdProps) {
   const featuredImage = getFeaturedImageUrl(post);
   const categories = getCategoryNames(post);
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skincake.tw';
+  const baseUrl = 'https://skincake-app-rscfzmo4wa-de.a.run.app';
   
   const jsonLd = {
     '@context': 'https://schema.org',
