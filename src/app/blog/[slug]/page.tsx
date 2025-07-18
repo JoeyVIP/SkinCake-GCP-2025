@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const featuredImage = getFeaturedImageUrl(post);
     const categories = getCategoryNames(post);
-    const baseUrl = process.env.FRONTEND_DOMAIN || 'https://localhost:3000';
+    const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.vip';
     const postUrl = `${baseUrl}/blog/${post.slug}`;
     
     // 從文章內容中提取純文字作為描述
@@ -222,7 +222,7 @@ export default async function BlogPost({ params }: Props) {
           <div className="max-w-[800px] mx-auto mb-8">
             <ShareButtons 
               title={post.title.rendered}
-              url={`${process.env.FRONTEND_DOMAIN || 'https://localhost:3000'}/blog/${post.slug}`}
+              url={`${process.env.FRONTEND_DOMAIN || 'https://skincake.vip'}/blog/${post.slug}`}
             />
           </div>
 

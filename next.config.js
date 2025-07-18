@@ -60,7 +60,7 @@ const nextConfig = {
   env: {
     WORDPRESS_API_URL: process.env.WORDPRESS_API_URL || 'https://skincake.online/wp-json/wp/v2',
     // The FRONTEND_DOMAIN should ideally be set in your production environment variables
-    FRONTEND_DOMAIN: process.env.FRONTEND_DOMAIN || 'http://localhost:3000'
+    FRONTEND_DOMAIN: process.env.FRONTEND_DOMAIN || 'https://skincake.vip'
   },
   
   // 優化靜態資源快取

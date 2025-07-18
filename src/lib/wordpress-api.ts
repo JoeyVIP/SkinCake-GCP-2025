@@ -504,7 +504,15 @@ export async function getTags(): Promise<WPTag[]> {
 }
 
 export function getFeaturedImageUrl(post: WPPost): string {
-  return post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '/images/default-post-image.svg';
+  const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+  
+  if (imageUrl) {
+    return imageUrl;
+  }
+  
+  // 使用絕對 URL 作為預設圖片，確保 Facebook 可以正確抓取
+  const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.vip';
+  return `${baseUrl}/images/default-post-image.svg`;
 }
 
 export function getCategoryNames(post: WPPost): string[] {
