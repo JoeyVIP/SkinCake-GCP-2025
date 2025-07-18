@@ -21,7 +21,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // 為 GCP 環境限制並發生成的頁面數量
+  // 為 GCP 環境限制並發生的頁面數量
   generateBuildId: async () => {
     return process.env.GITHUB_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'development'
   },
@@ -60,7 +60,7 @@ const nextConfig = {
   env: {
     WORDPRESS_API_URL: process.env.WORDPRESS_API_URL || 'https://skincake.online/wp-json/wp/v2',
     // The FRONTEND_DOMAIN should ideally be set in your production environment variables
-    FRONTEND_DOMAIN: process.env.FRONTEND_DOMAIN || 'https://skincake.vip'
+    FRONTEND_DOMAIN: process.env.FRONTEND_DOMAIN || 'https://skincake.tw'
   },
   
   // 優化靜態資源快取
