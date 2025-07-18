@@ -66,27 +66,29 @@ export default function RandomRelatedPosts({ initialPosts, excludeId }: RandomRe
             <Link
               key={relatedPost.id}
               href={`/blog/${relatedPost.slug}`}
-              className="block group"
+              className="block h-full group"
             >
-              <article className="bg-white rounded-lg shadow-md overflow-hidden transition-shadow duration-300 hover:shadow-xl">
-                <div className="relative w-full h-48">
+              <article className="bg-white rounded-xl shadow-sm hover:shadow-md overflow-hidden transition-shadow duration-300 h-full flex flex-col">
+                <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                   <Image 
                     src={imageProps.src}
                     alt={imageProps.alt}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 </div>
-                <div className="p-4">
+                <div className="p-6 flex-grow">
                   {/* 分類標籤 */}
                   {categories.length > 0 && (
-                    <span className="inline-block px-2 py-0.5 bg-[#FFE5E9] text-[#FF8599] rounded-full text-xs mb-2">
-                      {categories[0]}
-                    </span>
+                    <div className="flex items-center space-x-2 mb-3">
+                      <span className="px-3 py-1 bg-[#FFE5E9] text-[#FF8599] rounded-full text-sm">
+                        {categories[0]}
+                      </span>
+                    </div>
                   )}
                   
-                  <h3 className="font-medium text-gray-800 leading-snug hover:text-pink-500 transition-colors">
+                  <h3 className="text-lg font-bold mb-2 text-gray-800 hover:text-[#FFA4B3] transition-colors line-clamp-2">
                     {relatedPost.title.rendered}
                   </h3>
                 </div>
