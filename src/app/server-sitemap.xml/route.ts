@@ -5,24 +5,37 @@ export async function GET(request: Request) {
   const baseUrl = process.env.SITE_URL || 'https://skincake.tw'
   
   try {
-    // 獲取所有文章（分批獲取以避免內存問題）
-    const allPosts: any[] = []
-    let page = 1
-    let hasMore = true
+    let allPosts: any[] = []
+    let categories: any[] = []
     
-    while (hasMore) {
-      const posts = await getAllPosts(page, 50)
-      if (posts.length === 0) {
-        hasMore = false
-      } else {
-        allPosts.push(...posts)
-        page++
-      }
+    // 嘗試獲取文章，如果失敗則返回基本 sitemap
+    try {
+      // 限制在 build 時的請求
+      const maxPosts = process.env.NEXT_PHASE === 'phase-production-build' ? 100 : 500
+      let page = 1
+      let hasMore = true
       
-      // 限制最多獲取 500 篇文章
-      if (allPosts.length >= 500) {
-        break
+      while (hasMore && allPosts.length < maxPosts) {
+        const posts = await getAllPosts(page, 50)
+        if (posts.length === 0) {
+          hasMore = false
+        } else {
+          allPosts.push(...posts)
+          page++
+        }
       }
+    } catch (error) {
+      console.warn('Failed to fetch posts for sitemap:', error)
+      // 如果獲取文章失敗，繼續生成基本 sitemap
+    }
+    
+    // 嘗試獲取分類
+    try {
+      categories = await getCategories()
+    } catch (error) {
+      console.warn('Failed to fetch categories for sitemap:', error)
+      // 如果獲取分類失敗，使用空陣列
+      categories = []
     }
     
     // 生成文章 URLs
@@ -33,8 +46,7 @@ export async function GET(request: Request) {
       priority: 0.9,
     }))
     
-    // 獲取所有分類
-    const categories = await getCategories()
+    // 生成分類 URLs
     const categoryUrls = categories
       .map((category) => ({
         loc: `${baseUrl}/category/${encodeURIComponent(category.slug)}`,

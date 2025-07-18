@@ -173,50 +173,46 @@ export async function getRandomPosts(count: number = 6, excludeId?: number): Pro
     const response = await fetchWithRetry(
       `${API_BASE}/posts?per_page=100&orderby=date&order=desc&_embed&status=publish&_t=${timestamp}&_r=${randomSeed}`,
       { 
-        // 在 build 時使用 force-cache，運行時使用 no-store
+        // 在 build 時只使用 force-cache，運行時使用 revalidate
         ...(isBuildTime ? {
-          cache: 'force-cache',
-          next: { revalidate: 60 } // 1分鐘後重新驗證
+          cache: 'force-cache'
         } : {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
+          next: { revalidate: 60 }
         })
       }
     );
-    
-    let posts = await response.json();
-    
-    // 排除指定的文章
-    if (excludeId) {
-      posts = posts.filter((post: WPPost) => post.id !== excludeId);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
     }
+
+    const posts: WPPost[] = await response.json();
     
-    // 使用 Fisher-Yates 洗牌算法（和原始版本完全一致）
-    for (let i = posts.length - 1; i > 0; i--) {
+    if (!posts || posts.length === 0) {
+      console.warn('No posts available for random selection');
+      return [];
+    }
+
+    // 移除被排除的文章
+    const filteredPosts = excludeId 
+      ? posts.filter(post => post.id !== excludeId)
+      : posts;
+
+    if (filteredPosts.length === 0) {
+      return [];
+    }
+
+    // 使用 Fisher-Yates 洗牌算法隨機排序
+    const shuffled = [...filteredPosts];
+    for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [posts[i], posts[j]] = [posts[j], posts[i]];
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    
-    // 取前 count 篇
-    return posts.slice(0, count);
+
+    return shuffled.slice(0, count);
   } catch (error) {
-    if (isCloudRun) {
-      console.error('GCP getRandomPosts failed:', {
-        count,
-        excludeId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        environment: 'cloud-run'
-      });
-    } else {
-      console.error('Error fetching random posts:', error);
-    }
-    
-    // 如果隨機獲取失敗，回退到最新文章
-    return getRecentPosts(count);
+    console.error('Error fetching random posts:', error);
+    return [];
   }
 }
 

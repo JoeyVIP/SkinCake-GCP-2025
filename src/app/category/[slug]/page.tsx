@@ -45,12 +45,10 @@ export async function generateStaticParams() {
 
 // SEO 元數據生成
 export async function generateMetadata({ 
-  params,
-  searchParams 
-}: CategoryPageProps): Promise<Metadata> {
+  params
+}: { params: { slug: string } }): Promise<Metadata> {
   try {
     const category = await getCategoryBySlug(params.slug);
-    const currentPage = parseInt(searchParams?.page || '1', 10);
     
     if (!category) {
       return {
@@ -63,9 +61,8 @@ export async function generateMetadata({
       };
     }
 
-    const pageTitle = currentPage > 1 
-      ? `${category.name} - 第 ${currentPage} 頁 - SkinCake 肌膚蛋糕`
-      : `${category.name} - SkinCake 肌膚蛋糕`;
+    // 只為第一頁生成元數據，避免 Dynamic Server Usage 錯誤
+    const pageTitle = `${category.name} - SkinCake 肌膚蛋糕`;
 
     return {
       title: pageTitle,
