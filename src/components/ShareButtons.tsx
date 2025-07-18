@@ -7,6 +7,22 @@ interface ShareButtonsProps {
   url: string;
 }
 
+// GA 事件追蹤輔助函數
+function trackShareEvent(method: string, title: string, url: string) {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', 'share', {
+      method: method,
+      content_type: 'article',
+      item_id: url,
+      title: title,
+    });
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📊 GA Share Event:', { method, title, url });
+    }
+  }
+}
+
 export default function ShareButtons({ title, url }: ShareButtonsProps) {
   const shareData = {
     title,
@@ -17,6 +33,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
+        trackShareEvent('native_share', title, url);
       } catch (error) {
         console.log('分享失敗或用戶取消了分享');
       }
@@ -25,6 +42,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
       try {
         await navigator.clipboard.writeText(url);
         alert('連結已複製到剪貼板！');
+        trackShareEvent('copy_link', title, url);
       } catch (error) {
         console.error('複製失敗:', error);
       }
@@ -33,8 +51,9 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
 
   const shareToFacebook = () => {
     // 使用 Facebook 的完整分享 API，包含標題和描述
-    const facebookUrl = `https://www.facebook.com/dialog/share?app_id=1938467216918441&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}&display=popup`;
+    const facebookUrl = `https://www.facebook.com/dialog/share?app_id=1879313576190232&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}&display=popup`;
     window.open(facebookUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
+    trackShareEvent('facebook', title, url);
   };
 
   const shareToThreads = () => {
@@ -42,11 +61,13 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
     const threadsText = `${title}\n\n${url}`;
     const threadsUrl = `https://threads.net/intent/post?text=${encodeURIComponent(threadsText)}`;
     window.open(threadsUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
+    trackShareEvent('threads', title, url);
   };
 
   const shareToLine = () => {
     const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`;
     window.open(lineUrl, '_blank', 'width=600,height=400');
+    trackShareEvent('line', title, url);
   };
 
   return (

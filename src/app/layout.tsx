@@ -3,6 +3,7 @@ import { Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import Analytics from "@/components/Analytics";
 
 const noto_sans_tc = Noto_Sans_TC({
   subsets: ["latin"],
@@ -96,9 +97,9 @@ export default function RootLayout({
         {/* 預載關鍵圖片 */}
         <link rel="preload" href="/images/main_skincake_logo.png" as="image" />
         
-        {/* 網站驗證 */}
-        <meta name="google-site-verification" content="your-google-verification-code" />
-        <meta name="facebook-domain-verification" content="your-facebook-verification-code" />
+        {/* 網站驗證 - 請替換為你的實際驗證碼 */}
+        <meta name="google-site-verification" content="YOUR_ACTUAL_GOOGLE_VERIFICATION_CODE" />
+        <meta name="facebook-domain-verification" content="YOUR_ACTUAL_FACEBOOK_VERIFICATION_CODE" />
       </head>
       <body className={`${noto_sans_tc.className} flex flex-col min-h-screen`}>
         <Header />
@@ -106,6 +107,8 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        {/* Google Analytics 和其他追蹤腳本 */}
+        <Analytics />
       </body>
     </html>
   );

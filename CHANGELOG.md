@@ -1,5 +1,44 @@
 # 更新日誌
 
+## [2.2.4] - 2025-01-09
+
+### 📊 Google Analytics 4 與 Facebook Pixel 完整實作
+
+#### ✨ 新增功能
+- **Google Analytics 4 深度整合**：
+  - ✅ 修復 GA 未載入問題 - 正確將 Analytics 組件加入 layout
+  - ✅ 實作進階事件追蹤：頁面瀏覽、外部連結點擊、站內搜尋、搜尋結果點擊、社交分享
+  - ✅ 開發環境除錯模式 - 所有事件在控制台即時顯示
+  - ✅ 新增 `/ga-debug` 除錯頁面，方便驗證 GA 運作狀態
+  
+- **Facebook Pixel 更新**：
+  - ✅ 更新為正確的像素編號：1879313576190232
+  - ✅ 整合 Facebook 分享功能與正確的 app_id
+  - ✅ 優化 Open Graph meta tags
+
+#### 🔧 技術改進
+- **程式碼優化**：
+  - 移除 SEOHead.tsx 中的重複 GA 代碼
+  - 統一使用 Analytics.tsx 管理所有追蹤腳本
+  - 使用 Next.js Script 組件的 `afterInteractive` 策略優化載入效能
+
+#### 📝 新增文件
+- 創建 `docs/technical/analytics-setup.md` 詳細記錄所有分析設定
+- 包含驗證方法、實作細節和未來建議
+
+#### 🎯 追蹤配置
+- **GA4 串流資訊**：
+  - 串流名稱：肌膚蛋糕
+  - 串流網址：https://skincake.tw
+  - 串流 ID：10252773345
+  - 評估 ID：G-CS0NRJ05FE
+
+- **Facebook Pixel**：
+  - 像素名稱：SkinCake官網像素
+  - 像素編號：1879313576190232
+
+---
+
 ## [2.2.3] - 2025-07-19
 
 ### 🛠 網域切換與分享 URL 修復
