@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const featuredImage = getFeaturedImageUrl(post);
     const categories = getCategoryNames(post);
-    const baseUrl = 'https://skincake-app-rscfzmo4wa-de.a.run.app';
+    const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.tw';
     const postUrl = `${baseUrl}/blog/${post.slug}`;
     
     // 從文章內容中提取純文字作為描述
@@ -144,6 +144,8 @@ export default async function BlogPost({ params }: Props) {
     const relatedPosts = await getRandomPosts(6, post.id);
     const featuredImage = getFeaturedImageUrl(post);
     const categories = getCategoryNames(post);
+    const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.tw';
+    const postUrl = `${baseUrl}/blog/${post.slug}`;
     
     // 使用 image-utils 取得優化的圖片資訊
     const imageSource = getFeaturedImageFromPost(post);
@@ -228,7 +230,7 @@ export default async function BlogPost({ params }: Props) {
           <div className="max-w-[800px] mx-auto mb-8">
             <ShareButtons 
               title={post.title.rendered}
-              url={`https://skincake-app-rscfzmo4wa-de.a.run.app/blog/${post.slug}`}
+              url={postUrl}
             />
           </div>
 

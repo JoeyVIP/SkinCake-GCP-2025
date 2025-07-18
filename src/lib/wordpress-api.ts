@@ -568,7 +568,7 @@ export function getFeaturedImageUrl(post: WPPost): string {
   }
   
   // 使用絕對 URL 作為預設圖片，確保 Facebook 可以正確抓取
-  const baseUrl = 'https://skincake-app-rscfzmo4wa-de.a.run.app';
+  const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.tw';
   return `${baseUrl}/images/default-post-image.svg`;
 }
 
