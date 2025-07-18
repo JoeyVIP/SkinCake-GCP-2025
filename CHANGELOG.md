@@ -1,5 +1,16 @@
 # 更新日誌
 
+## [2.2.3] - 2025-07-19
+
+### 🛠 網域切換與分享 URL 修復
+
+- 🔄 **正式網域切換**：將所有程式碼中硬編碼 `skincake.vip` 全面替換為 `skincake.tw`，並使用 `process.env.FRONTEND_DOMAIN` 作為來源。
+- 🔗 **社交分享 URL**：文章頁分享按鈕、JSON-LD `mainEntityOfPage`、OpenGraph、Twitter Card 全面改用 `https://skincake.tw`。
+- 🌐 **Sitemap 改善**：`server-sitemap.xml` 使用百分比編碼分類 `slug`，並排除重複的 `/server-sitemap.xml` 自身。
+- 🚀 **Next config**：預設 `FRONTEND_DOMAIN` 改為 `https://skincake.tw`。
+
+---
+
 ## [2.2.2] - 2025-01-19
 
 ### ✨ 分類頁面與文章頁面 UI/UX 完整修復
