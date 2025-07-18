@@ -30,7 +30,7 @@ export default function Analytics() {
           t.src=v;s=b.getElementsByTagName(e)[0];
           s.parentNode.insertBefore(t,s)}(window, document,'script',
           'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '1879313576190232');
+          fbq('init', '1938467216918441');
           fbq('track', 'PageView');
         `}
       </Script>

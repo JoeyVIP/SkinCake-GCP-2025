@@ -98,7 +98,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       
       // 其他 meta tags
       other: {
-        'fb:app_id': '1879313576190232',
+        'fb:app_id': '1938467216918441',
         'article:published_time': post.date,
         'article:modified_time': post.modified || post.date,
         'article:author': 'SKIN CAKE',
