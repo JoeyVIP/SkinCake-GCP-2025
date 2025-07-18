@@ -7,8 +7,6 @@ const nextConfig = {
   experimental: {
     // 增加建置工作器的記憶體限制
     workerThreads: false,
-    // 增加靜態生成超時時間
-    staticPageGenerationTimeout: 120, // 增加到 120 秒
   },
   
   typescript: {
@@ -89,8 +87,7 @@ const nextConfig = {
     ];
   },
   
-  // GCP 環境：限制並發建置
-  concurrency: process.env.K_SERVICE !== undefined ? 2 : undefined,
+
   
   // 優化 webpack 配置以避免記憶體問題
   webpack: (config, { dev, isServer }) => {

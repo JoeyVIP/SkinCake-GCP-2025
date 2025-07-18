@@ -136,11 +136,12 @@ export async function getRecentPosts(count: number = 6): Promise<WPPost[]> {
     const response = await fetchWithRetry(
       `${API_BASE}/posts?per_page=${count}&_embed&status=publish`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' } // GCP: 不快取避免建置問題
-          : { next: { revalidate: 3600 } } // 本地: 使用 ISR
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 3600 }, // 1小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=3600' }
+        })
       }
     );
     
@@ -217,11 +218,12 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
     const response = await fetchWithRetry(
       `${API_BASE}/posts?slug=${slug}&_embed&status=publish`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 3600 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 3600 }, // 1小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=3600' }
+        })
       }
     );
     
@@ -249,11 +251,12 @@ export async function getAllPosts(page: number = 1, perPage: number = 50): Promi
     const response = await fetchWithRetry(
       `${API_BASE}/posts?per_page=${actualPerPage}&page=${page}&status=publish&_fields=id,slug,title,date,modified`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 7200 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 7200 }, // 2小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=7200' }
+        })
       }
     );
     
@@ -278,11 +281,12 @@ export async function getCategories(): Promise<WPCategory[]> {
     const response = await fetchWithRetry(
       `${API_BASE}/categories?per_page=50&hide_empty=true&_fields=id,name,slug,count`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 7200 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 7200 }, // 2小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=7200' }
+        })
       }
     );
     
@@ -307,11 +311,12 @@ export async function getPostsByCategory(categoryId: number, count: number = 10)
     const response = await fetchWithRetry(
       `${API_BASE}/posts?categories=${categoryId}&per_page=${actualCount}&_embed&status=publish`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 3600 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 3600 }, // 1小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=3600' }
+        })
       }
     );
     
@@ -345,11 +350,12 @@ export async function getPostsByCategoryWithPagination(
     const response = await fetchWithRetry(
       `${API_BASE}/posts?categories=${categoryId}&per_page=${actualPerPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 3600 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 3600 }, // 1小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=3600' }
+        })
       }
     );
     
@@ -415,11 +421,12 @@ export async function getPostsByTag(tagId: number, count: number = 10): Promise<
     const response = await fetchWithRetry(
       `${API_BASE}/posts?tags=${tagId}&per_page=${actualCount}&_embed&status=publish`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 3600 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 3600 }, // 1小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=3600' }
+        })
       }
     );
     
@@ -444,11 +451,12 @@ export async function getCategoryById(categoryId: number): Promise<WPCategory | 
     const response = await fetchWithRetry(
       `${API_BASE}/categories/${categoryId}?_fields=id,name,slug,description,count`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 7200 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 7200 }, // 2小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=7200' }
+        })
       }
     );
     
@@ -472,11 +480,12 @@ export async function getTags(): Promise<WPTag[]> {
     const response = await fetchWithRetry(
       `${API_BASE}/tags?per_page=50&hide_empty=true&_fields=id,name,slug,count`,
       { 
-        // 修復：只使用一種快取策略
-        ...(isCloudRun 
-          ? { cache: 'no-store' }
-          : { next: { revalidate: 7200 } }
-        )
+        // 修復：生產環境也要有快取
+        next: { revalidate: 7200 }, // 2小時快取
+        ...(isCloudRun && { 
+          // GCP 環境額外設定
+          headers: { 'Cache-Control': 'public, max-age=7200' }
+        })
       }
     );
     

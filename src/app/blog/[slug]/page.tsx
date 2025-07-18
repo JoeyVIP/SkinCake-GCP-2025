@@ -16,8 +16,8 @@ type Props = {
 // 生成靜態參數以預渲染熱門文章
 export async function generateStaticParams() {
   try {
-    // 獲取最新的 20 篇文章進行預渲染
-    const posts = await getRecentPosts(20);
+    // 獲取最新的 50 篇文章進行預渲染，增加快取覆蓋率
+    const posts = await getRecentPosts(50);
     
     return posts.map((post: WPPost) => ({
       slug: post.slug,

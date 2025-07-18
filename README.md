@@ -1,6 +1,6 @@
 # SkinCake 肌膚蛋糕 - 韓國美容旅遊資訊平台
 
-![SkinCake Logo](https://img.shields.io/badge/SkinCake-V2.2.0-pink?style=for-the-badge)
+![SkinCake Logo](https://img.shields.io/badge/SkinCake-V2.2.1-pink?style=for-the-badge)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=nextdotjs)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
