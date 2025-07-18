@@ -105,8 +105,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         'article:section': categories[0] || '未分類',
       },
       
-      // 機器人設定
-      robots: {
+      // 機器人設定 - 開發環境(.vip)禁止索引
+      robots: baseUrl.includes('.vip') ? {
+        index: false,
+        follow: false,
+        googleBot: {
+          index: false,
+          follow: false,
+        },
+      } : {
         index: true,
         follow: true,
         googleBot: {

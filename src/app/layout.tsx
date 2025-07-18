@@ -23,7 +23,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  robots: {
+  robots: process.env.FRONTEND_DOMAIN?.includes('.vip') ? {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  } : {
     index: true,
     follow: true,
     googleBot: {

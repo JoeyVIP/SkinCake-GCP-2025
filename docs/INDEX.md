@@ -18,6 +18,7 @@
 - [故障排除](./maintenance/troubleshooting.md) - 常見問題解決
 - [更新流程](./maintenance/updates.md) - 系統更新指南
 - [備份策略](./maintenance/backup.md) - 資料備份方案
+- [網域遷移檢查清單](./maintenance/domain-migration-checklist.md) - 從開發環境到生產環境的完整遷移指南
 
 ## 🚀 快速開始
 
