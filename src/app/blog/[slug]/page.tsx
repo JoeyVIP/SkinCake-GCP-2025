@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { getPostBySlug, getRandomPosts, getRecentPosts, getFeaturedImageUrl, getCategoryNames, WPPost } from '@/lib/wordpress-api';
+import { getPostBySlug, getRecentPosts, getFeaturedImageUrl, getCategoryNames, WPPost } from '@/lib/wordpress-api';
 import ShareButtons from '@/components/ShareButtons';
 import BackToTop from '@/components/BackToTop';
 import RandomRelatedPosts from './RandomRelatedPosts';
@@ -98,7 +98,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       
       // 其他 meta tags
       other: {
-        'fb:app_id': '1879313576190232',
+        'fb:app_id': '1938467216918441',
         'article:published_time': post.date,
         'article:modified_time': post.modified || post.date,
         'article:author': 'SKIN CAKE',
@@ -141,7 +141,7 @@ export default async function BlogPost({ params }: Props) {
       notFound();
     }
 
-    const relatedPosts = await getRandomPosts(6, post.id);
+    // RandomRelatedPosts 由 client-side API 取得，不在 server 端抓取
     const featuredImage = getFeaturedImageUrl(post);
     const categories = getCategoryNames(post);
     const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.tw';
@@ -234,10 +234,8 @@ export default async function BlogPost({ params }: Props) {
             />
           </div>
 
-          {/* 相關文章推薦 - 客戶端組件處理隨機化 */}
-          {relatedPosts.length > 0 && (
-            <RandomRelatedPosts initialPosts={relatedPosts} excludeId={post.id} />
-          )}
+          {/* 相關文章推薦 - 交由 RandomRelatedPosts 客戶端自行載入 */}
+          <RandomRelatedPosts excludeId={post.id} />
         </div>
 
         {/* 固定分享按鈕暫時移除，專注於主要功能 */}

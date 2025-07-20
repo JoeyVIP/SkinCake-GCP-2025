@@ -51,7 +51,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
 
   const shareToFacebook = () => {
     // 使用 Facebook 的完整分享 API，包含標題和描述
-    const facebookUrl = `https://www.facebook.com/dialog/share?app_id=1879313576190232&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}&display=popup`;
+    const facebookUrl = `https://www.facebook.com/dialog/share?app_id=1938467216918441&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}&display=popup`;
     window.open(facebookUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
     trackShareEvent('facebook', title, url);
   };
