@@ -26,7 +26,7 @@ export default function ArticleCard({ post }: { post: any }) {
 
   return (
     <div className="group overflow-hidden rounded-lg border shadow-sm transition-all hover:shadow-md">
-      <Link href={`/blog/${post.slug}`} className="block">
+      <Link href={`/blog/${post.slug}`} className="block" onClick={() => { if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }}>
         <div className="relative aspect-video">
           {/* 載入狀態覆蓋層 */}
           {!imageLoaded && !imageError && (
