@@ -162,6 +162,9 @@ export default async function BlogPost({ params }: Props) {
 
     return (
       <>
+        {/* 預載首屏圖片以加速 LCP */}
+        <link rel="preload" as="image" href={imageProps.src} imageSrcSet={imageProps.src} imageSizes="(max-width:768px) 100vw, 800px" />
+
         {/* 結構化數據 */}
         <ArticleJsonLd post={post} />
         
@@ -184,6 +187,7 @@ export default async function BlogPost({ params }: Props) {
                   fill
                   className="object-cover rounded-xl shadow-md"
                   priority
+                  fetchPriority="high"
                   sizes="(max-width: 768px) 100vw, 800px"
                   quality={85}
                 />

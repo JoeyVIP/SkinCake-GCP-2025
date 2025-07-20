@@ -140,7 +140,7 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
   const finalFallback = fallback || DEFAULT_IMAGES.article;
   
   return {
-    src: imageSource.url,
+    src: transformCdnUrl(imageSource.url),
     alt: imageSource.alt || '圖片',
     // GCP 環境：禁用圖片優化相關屬性
     ...(isCloudRun ? {
@@ -177,6 +177,27 @@ export function createImageProps(imageSource: ImageSource, fallback?: string) {
       }
     }
   };
+}
+
+// 把 WordPress 圖片 URL 轉到 Jetpack CDN (Photon) 以獲取 WebP/AVIF 與壓縮
+function transformCdnUrl(originalUrl: string): string {
+  if (!isCloudRun) return originalUrl;
+
+  try {
+    const urlObj = new URL(originalUrl);
+    if (!urlObj.hostname.includes('skincake.online')) {
+      return originalUrl; // 非 WP 圖片不處理
+    }
+
+    // Photon 格式: https://i0.wp.com/{域名}{路徑}?w=1200&q=60&ssl=1
+    const cdnBase = 'https://i0.wp.com';
+    const width = 1200; // 上限 1200px
+    const quality = 60; // 更強壓縮
+    const cdnUrl = `${cdnBase}/${urlObj.hostname}${urlObj.pathname}?w=${width}&q=${quality}&ssl=1`;
+    return cdnUrl;
+  } catch {
+    return originalUrl;
+  }
 }
 
 /**

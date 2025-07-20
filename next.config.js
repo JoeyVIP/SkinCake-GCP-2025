@@ -40,6 +40,12 @@ const nextConfig = {
         hostname: 'image-cdn-flare.qdm.cloud',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i0.wp.com',
+        port: '',
+        pathname: '/skincake.online/**',
       }
     ],
     // 🔧 修復：GCP 環境完全禁用圖片優化避免 400 錯誤
