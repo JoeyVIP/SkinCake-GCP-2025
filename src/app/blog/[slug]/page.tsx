@@ -180,7 +180,16 @@ export default async function BlogPost({ params }: Props) {
             
             {/* 特色圖片 - 固定 16:10 比例 */}
             {featuredImage && (
-              <div className="mb-8 relative w-full aspect-[16/10] overflow-hidden rounded-xl shadow-md">
+              <>
+                {/* 預載特色圖中等尺寸以加速 LCP */}
+                <link
+                  rel="preload"
+                  as="image"
+                  href={`${featuredImage}?w=768&q=60&ssl=1`}
+                  imageSrcSet={`${featuredImage}?w=768&q=60&ssl=1 768w, ${featuredImage}?w=1200&q=60&ssl=1 1200w`}
+                  imageSizes="(max-width: 768px) 100vw, 800px"
+                />
+                <div className="mb-8 relative w-full aspect-[16/10] overflow-hidden rounded-xl shadow-md">
                 <Image
                   src={featuredImage}
                   alt={post.title.rendered}
@@ -192,6 +201,7 @@ export default async function BlogPost({ params }: Props) {
                   className="object-cover"
                 />
               </div>
+            </>
             )}
 
             {/* 文章內容卡片 - 白色背景，圓角，陰影 */}

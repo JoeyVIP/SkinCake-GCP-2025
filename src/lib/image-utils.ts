@@ -248,9 +248,8 @@ function transformCdnUrl(originalUrl: string): string {
 
     // Photon 格式: https://i0.wp.com/{域名}{路徑}?w=1200&q=60&ssl=1
     const cdnBase = 'https://i0.wp.com';
-    const width = 1200; // 上限 1200px
-    const quality = 60; // 更強壓縮
-    const cdnUrl = `${cdnBase}/${urlObj.hostname}${urlObj.pathname}?w=${width}&q=${quality}&ssl=1`;
+    // 交由 Next.js Image remote loader 動態附加 w,q 參數
+    const cdnUrl = `${cdnBase}/${urlObj.hostname}${urlObj.pathname}?ssl=1`;
     return cdnUrl;
   } catch {
     return originalUrl;
