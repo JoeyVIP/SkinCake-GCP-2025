@@ -160,6 +160,11 @@ export default function CakeNews() {
               href={`/blog/${post.slug}`}
               className="block h-full group"
               style={{ animationDelay: `${index * 0.1}s` }}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+                }
+              }}
             >
               <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden h-full flex flex-col">
                 <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
