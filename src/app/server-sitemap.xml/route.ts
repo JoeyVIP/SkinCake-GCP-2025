@@ -12,17 +12,17 @@ export async function GET(request: Request) {
     try {
       // 限制在 build 時的請求
       const maxPosts = process.env.NEXT_PHASE === 'phase-production-build' ? 100 : 500
-      let page = 1
-      let hasMore = true
-      
+    let page = 1
+    let hasMore = true
+    
       while (hasMore && allPosts.length < maxPosts) {
-        const posts = await getAllPosts(page, 50)
-        if (posts.length === 0) {
-          hasMore = false
-        } else {
-          allPosts.push(...posts)
-          page++
-        }
+      const posts = await getAllPosts(page, 50)
+      if (posts.length === 0) {
+        hasMore = false
+      } else {
+        allPosts.push(...posts)
+        page++
+      }
       }
     } catch (error) {
       console.warn('Failed to fetch posts for sitemap:', error)

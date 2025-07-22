@@ -1,145 +1,93 @@
-# 更新日誌
+# Changelog
 
-## [2.2.4] - 2025-01-09
+## [v2.3.0] - 2025-01-20
 
-### 📊 Google Analytics 4 與 Facebook Pixel 完整實作
+### 🚀 重大 CSS 性能優化 & 建置修復
+**目標：解決 PageSpeed 報告的 1.74 秒 CSS 阻塞渲染問題**
 
-#### ✨ 新增功能
-- **Google Analytics 4 深度整合**：
-  - ✅ 修復 GA 未載入問題 - 正確將 Analytics 組件加入 layout
-  - ✅ 實作進階事件追蹤：頁面瀏覽、外部連結點擊、站內搜尋、搜尋結果點擊、社交分享
-  - ✅ 開發環境除錯模式 - 所有事件在控制台即時顯示
-  - ✅ 新增 `/ga-debug` 除錯頁面，方便驗證 GA 運作狀態
-  
-- **Facebook Pixel 更新**：
-  - ✅ 更新為正確的像素編號：1879313576190232
-  - ✅ 整合 Facebook 分享功能與正確的 app_id
-  - ✅ 優化 Open Graph meta tags
+#### ✅ 關鍵 CSS 內聯優化
+- **內聯關鍵 CSS** (~3KB)：基礎版面、顏色系統、響應式網格直接嵌入 HTML
+- **延遲載入完整 Tailwind**：非關鍵樣式延後 2 秒或用戶互動時載入
+- **DNS 預連接**：預連 Google Fonts、Jetpack CDN、GA、FB Pixel 等關鍵資源
 
-#### 🔧 技術改進
-- **程式碼優化**：
-  - 移除 SEOHead.tsx 中的重複 GA 代碼
-  - 統一使用 Analytics.tsx 管理所有追蹤腳本
-  - 使用 Next.js Script 組件的 `afterInteractive` 策略優化載入效能
+#### ⚡ Analytics 延遲載入
+- **GA4 延遲載入**：3 秒後或用戶互動時載入，避免阻塞首屏渲染
+- **Facebook Pixel 延遲載入**：同樣策略，減少初始 JS 大小
+- **保留完整功能**：頁面追蹤、事件監控、除錯工具等功能不變
 
-#### 📝 新增文件
-- 創建 `docs/technical/analytics-setup.md` 詳細記錄所有分析設定
-- 包含驗證方法、實作細節和未來建議
+#### 🔧 Tailwind CSS 最佳化
+- **移除不必要模組**：backdrop-blur、scroll-snap、user-select 等 13 個模組
+- **精簡 CSS 輸出**：預期減少 ~30% CSS 檔案大小
+- **保留核心功能**：版面、顏色、響應式等關鍵樣式完整保留
 
-#### 🎯 追蹤配置
-- **GA4 串流資訊**：
-  - 串流名稱：肌膚蛋糕
-  - 串流網址：https://skincake.tw
-  - 串流 ID：10252773345
-  - 評估 ID：G-CS0NRJ05FE
+#### 🐛 分類頁面建置修復
+- **移除 searchParams 依賴**：修復 Dynamic Server Usage 錯誤
+- **客戶端分頁**：改用 AJAX 載入分頁內容，支援無刷新翻頁
+- **滾動優化**：分頁切換自動回到頂部
 
-- **Facebook Pixel**：
-  - 像素名稱：SkinCake官網像素
-  - 像素編號：1879313576190232
+#### 📊 預期性能提升
+- **LCP 改善**：關鍵 CSS 內聯應能顯著改善首屏載入
+- **FCP 提升**：延遲載入策略減少阻塞時間
+- **JS Bundle 減少**：延遲載入策略降低初始載入負擔
 
----
+#### 🛠️ 技術實現
+- 新增 `LazyCSS` 組件處理延遲載入
+- 新增 `CategoryClientContainer` 管理分類頁狀態
+- 升級 Analytics 組件為智能延遲載入
+- 優化 `layout.tsx` 實現關鍵路徑優化
 
-## [2.2.3] - 2025-07-19
-
-### 🛠 網域切換與分享 URL 修復
-
-- 🔄 **正式網域切換**：將所有程式碼中硬編碼 `skincake.vip` 全面替換為 `skincake.tw`，並使用 `process.env.FRONTEND_DOMAIN` 作為來源。
-- 🔗 **社交分享 URL**：文章頁分享按鈕、JSON-LD `mainEntityOfPage`、OpenGraph、Twitter Card 全面改用 `https://skincake.tw`。
-- 🌐 **Sitemap 改善**：`server-sitemap.xml` 使用百分比編碼分類 `slug`，並排除重複的 `/server-sitemap.xml` 自身。
-- 🚀 **Next config**：預設 `FRONTEND_DOMAIN` 改為 `https://skincake.tw`。
+#### 📋 待後續測試
+- PageSpeed Insights 分數改善情況
+- 實際 LCP/FCP 指標變化
+- 用戶體驗影響評估
 
 ---
 
-## [2.2.2] - 2025-01-19
+## [v2.2.4] - 2025-01-19
 
-### ✨ 分類頁面與文章頁面 UI/UX 完整修復
+### ✅ GA4 & Facebook Pixel 完整實作
+- **Google Analytics 4 (G-CS0NRJ05FE)** 完整配置與事件追蹤
+- **Facebook Pixel (1879313576190232)** 頁面瀏覽追蹤
+- **搜尋事件追蹤**：search、search_result_click
+- **社群分享追蹤**：share 事件含平台參數
+- **外鏈點擊追蹤**：自動追蹤站外連結
+- **除錯工具**：window.gaDebug() 便於開發測試
 
-- ✅ **分類頁面樣式修正**
-  - **頁面寬度統一**：將頁面最大寬度限制為 `1080px`，與導航列對齊。
-  - **關鍵字區塊優化**：移除多餘的白色背景和內邊距，視覺更整合。
-  - **文章卡片樣式統一**：
-    - 圖片比例調整為 `16:9`，匹配線上版本。
-    - 恢復顯示分類標籤和日期，並置於同一行。
-    - 調整標題為灰色、字體稍大 (`text-base`) 且限制兩行，符合最終樣式。
-  - **Cakery (0) 顯示問題**：修正 API 邏輯 (`hide_empty=false`)，確保文章數為 0 的分類也能正常顯示。
+### 🔧 性能優化
+- **圖片 CDN 優化**：集成 Jetpack Photon，自動 WebP/AVIF 轉換
+- **圖片壓縮**：quality=60, width=1200 大幅減少圖片大小
+- **CLS 修復**：圖片 aspect-ratio 預防版面位移
+- **LCP 優化**：關鍵圖片 fetchPriority="high" + preload
 
-- ✅ **文章頁面麵包屑修復**
-  - **解決排版擁擠**：移除麵包屑中的文章標題，只顯示到分類層級，確保在窄螢幕上也能水平排列。
-  - **連結功能修復**：修正 `Breadcrumb` 組件邏輯，確保所有帶 `href` 的項目（包括分類名稱）都能正確渲染為可點擊的連結。
+### 🐛 建置問題修復
+- **修復 Dynamic Server Usage**：getRandomPosts 條件快取策略
+- **修復 Analytics Suspense**：客戶端處理 searchParams
+- **修復 RandomRelatedPosts**：改為純客戶端載入
+- **修復 Facebook App ID**：更新為正確 ID (1938467216918441)
 
-- ✅ **Hydration 錯誤修復**
-  - 統一 `decodeHtml` 函數，避免伺服器端和客戶端渲染不一致導致的 `Suspense boundary` Hydration 錯誤。
-
-## [2.2.1] - 2025-01-18
-
-### 🚀 快取效能大幅優化
-- ✅ **修復生產環境快取策略錯誤**
-  - 之前：生產環境每次都重新獲取資料（cache: 'no-store'）
-  - 現在：生產環境正確使用 ISR 快取（revalidate: 3600）
-- ✅ **統一快取時間設定**
-  - 文章內容：1小時自動更新
-  - 分類/標籤：2小時自動更新
-  - 隨機推薦：保持即時更新
-- ✅ **增加預渲染覆蓋率**
-  - 從預渲染 20 篇文章增加到 50 篇
-  - 更多文章享受瞬間載入體驗
-- ✅ **GCP Cloud Run 特別優化**
-  - 添加 Cache-Control 標頭
-  - 保持 API 效能與快取平衡
-
-### 📈 效能改善預期
-- 首次訪問：正常載入時間
-- 重複訪問：幾乎瞬間載入
-- 前50篇文章：預渲染極速體驗
-- 其他文章：訪問後快取，後續快速載入
-
-## [2.2.0] - 2025-01-18
-
-### 🎯 文章頁面完整修復
-- ✅ 完全匹配線上版本的樣式佈局
-- ✅ 修復圖片顯示位置（頂部大圖、下方內容）
-- ✅ 優化文字閱讀體驗（行高、字體大小、段落間距）
-- ✅ 修復社交分享功能（Facebook、Threads、複製連結）
-- ✅ 實現隨機相關文章推薦（含手動重新整理功能）
-
-### 🚀 SEO 大幅優化
-- ✅ 動態 Sitemap 生成（next-sitemap + server-sitemap）
-- ✅ 結構化數據完整支援（JSON-LD）
-- ✅ 優化 metadata 和 Open Graph 標籤
-- ✅ Canonical URLs 避免重複內容
-- ✅ 自動排程重建（GitHub Actions）
-- ✅ 靜態頁面預渲染（ISR 1小時）
-- ✅ 麵包屑導航強化內部連結
-- ✅ 全站圖片優化（Next.js Image 元件）
-
-### 🎨 效能與使用者體驗
-- ✅ 優化字體載入（display: swap）
-- ✅ 預連接重要資源（preconnect/dns-prefetch）
-- ✅ 改善圖片載入效能（尺寸優化、lazy loading）
-- ✅ 增強 alt 文字改善無障礙性
-
-## [2.1.0] - 2025-01-17
-
-### ✨ 首頁修復與優化
-- 修復蛋糕報報區塊重複標題問題
-- 修復偷偷推薦給你區塊重複標題問題  
-- 恢復淡粉紅色背景設計
-- 優化區塊間距和視覺效果
-- 完成首頁所有功能區塊的樣式統一
-
-### 📌 待修復
-- 文章頁樣式與功能
-- 分類頁樣式與功能
-- 搜尋頁樣式與功能
-
-## [2.0.0] - 2025-01-12
-
-### 🎉 重大更新 - 完全重構
-- 從舊版 SPA 架構遷移到 Next.js 14
-- 全新的 TypeScript + Tailwind CSS 技術棧
-- WordPress REST API 深度整合
-- 響應式設計全面優化
+### 📱 用戶體驗改善
+- **點擊回頂部**：推薦文章點擊自動滾動到頂部
+- **分頁載入最佳化**：改善分類頁面分頁體驗
+- **錯誤處理**：強化 API 錯誤處理機制
 
 ---
 
-[查看完整更新歷史](./docs/CHANGELOG.md) 
+## [v2.2.3] - 2025-01-18
+- 修復部署過程中的建置錯誤
+- 完善 WordPress API 資料獲取邏輯
+
+## [v2.2.2] - 2025-01-17
+- 增強網站 SEO 設定
+- 改善圖片載入效能
+
+## [v2.2.1] - 2025-01-16
+- 優化網站載入速度
+- 修復已知 bug
+
+## [v2.2.0] - 2025-01-15
+- 新增分類頁面功能
+- 改善網站導航結構
+
+## [v2.1.0] - 2025-01-10
+- 升級至 Next.js 14
+- 改善整體效能表現 

@@ -192,7 +192,7 @@ export async function getRandomPosts(count: number = 6, excludeId?: number): Pro
       console.warn('No posts available for random selection');
       return [];
     }
-
+    
     // 移除被排除的文章
     const filteredPosts = excludeId 
       ? posts.filter(post => post.id !== excludeId)
@@ -201,17 +201,17 @@ export async function getRandomPosts(count: number = 6, excludeId?: number): Pro
     if (filteredPosts.length === 0) {
       return [];
     }
-
+    
     // 使用 Fisher-Yates 洗牌算法隨機排序
     const shuffled = [...filteredPosts];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-
+    
     return shuffled.slice(0, count);
   } catch (error) {
-    console.error('Error fetching random posts:', error);
+      console.error('Error fetching random posts:', error);
     return [];
   }
 }

@@ -10,6 +10,7 @@ import CategoryKeywords from '@/components/category/CategoryKeywords';
 import CategoryArticleGrid from '@/components/category/CategoryArticleGrid';
 import CategoryPagination from '@/components/category/CategoryPagination';
 import CategoryLoadingSkeleton from '@/components/category/CategoryLoadingSkeleton';
+import CategoryClientContainer from '@/components/category/CategoryClientContainer';
 
 // GCP 環境檢測
 const isCloudRun = process.env.K_SERVICE !== undefined;
@@ -17,9 +18,6 @@ const isCloudRun = process.env.K_SERVICE !== undefined;
 interface CategoryPageProps {
   params: {
     slug: string;
-  };
-  searchParams: {
-    page?: string;
   };
 }
 
@@ -116,13 +114,12 @@ export async function generateMetadata({
   }
 }
 
-export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
+export default async function CategoryPage({ params }: CategoryPageProps) {
   try {
-    console.log('CategoryPage: Starting with params:', params, 'searchParams:', searchParams);
+    console.log('CategoryPage: Starting with params:', params);
     
-    // 處理分頁參數 - 添加安全檢查
-    const pageParam = searchParams?.page;
-    const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
+    // 修改：移除 searchParams 依賴，改為靜態載入第一頁
+    const currentPage = 1; // 固定載入第一頁
     const postsPerPage = 9; // 每頁9篇文章，匹配線上版
 
     console.log('CategoryPage: Parsed currentPage:', currentPage);
@@ -161,19 +158,11 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             />
           </Suspense>
           
-          {/* 文章網格 */}
-          <Suspense fallback={<CategoryLoadingSkeleton />}>
-            <CategoryArticleGrid 
-              posts={postsData.posts}
-              currentCategory={currentCategory}
-            />
-          </Suspense>
-          
-          {/* 分頁組件 */}
-          <CategoryPagination 
-            currentPage={currentPage}
+          {/* 客戶端容器管理動態內容 */}
+          <CategoryClientContainer
+            initialPosts={postsData.posts}
+            currentCategory={currentCategory}
             totalPages={postsData.totalPages}
-            categorySlug={params.slug}
           />
         </div>
       </div>

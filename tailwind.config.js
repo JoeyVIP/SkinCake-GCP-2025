@@ -15,4 +15,26 @@ module.exports = {
     },
   },
   plugins: [],
+  // 生產環境 CSS 最佳化
+  corePlugins: {
+    // 移除不常用的功能以減少 CSS 大小
+    backdropBlur: false,
+    backdropBrightness: false,
+    backdropContrast: false,
+    backdropGrayscale: false,
+    backdropHueRotate: false,
+    backdropInvert: false,
+    backdropOpacity: false,
+    backdropSaturate: false,
+    backdropSepia: false,
+    scrollSnapType: false,
+    scrollSnapAlign: false,
+    touchAction: false,
+    userSelect: false,
+    resize: false,
+    placeholderColor: false,
+    placeholderOpacity: false,
+    caretColor: false,
+    accentColor: false,
+  }
 }; 

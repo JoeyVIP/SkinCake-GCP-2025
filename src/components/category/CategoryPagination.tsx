@@ -1,29 +1,46 @@
 'use client';
 
-import Link from 'next/link';
+import { useState } from 'react';
+import { getPostsByCategoryWithPagination } from '@/lib/wordpress-api';
+import { WPPost } from '@/lib/wordpress-api';
 
 interface CategoryPaginationProps {
   currentPage: number;
   totalPages: number;
   categorySlug: string;
+  categoryId: number;
+  onPageChange?: (posts: WPPost[], page: number) => void;
 }
 
 export default function CategoryPagination({ 
-  currentPage, 
+  currentPage: initialPage, 
   totalPages, 
-  categorySlug 
+  categorySlug,
+  categoryId,
+  onPageChange
 }: CategoryPaginationProps) {
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [isLoading, setIsLoading] = useState(false);
+  
   // 如果只有一頁或少於一頁，不顯示分頁
   if (totalPages <= 1) {
     return null;
   }
 
-  // 生成頁面 URL 的簡單函數
-  const createPageUrl = (page: number) => {
-    if (page === 1) {
-      return `/category/${categorySlug}`;
+  // 處理頁面切換
+  const handlePageChange = async (page: number) => {
+    if (page === currentPage || isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const postsData = await getPostsByCategoryWithPagination(categoryId, page, 9);
+      setCurrentPage(page);
+      onPageChange?.(postsData.posts, page);
+    } catch (error) {
+      console.error('Error loading page:', error);
+    } finally {
+      setIsLoading(false);
     }
-    return `/category/${categorySlug}?page=${page}`;
   };
 
   // 計算要顯示的頁碼
@@ -50,39 +67,46 @@ export default function CategoryPagination({
 
   return (
     <div className="flex justify-center items-center mt-12 space-x-2">
+      {isLoading && (
+        <div className="text-sm text-gray-500 mr-4">載入中...</div>
+      )}
+      
       {/* 上一頁 */}
       {currentPage > 1 && (
-        <Link
-          href={createPageUrl(currentPage - 1)}
-          className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={isLoading}
+          className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           上一頁
-        </Link>
+        </button>
       )}
       
       {/* 頁碼 */}
       {pageNumbers.map((page) => (
-        <Link
+        <button
           key={page}
-          href={createPageUrl(page)}
-          className={`px-3 py-2 text-sm rounded-md transition-colors ${
+          onClick={() => handlePageChange(page)}
+          disabled={isLoading}
+          className={`px-3 py-2 text-sm rounded-md transition-colors disabled:opacity-50 ${
             page === currentPage
               ? 'bg-pink-500 text-white border border-pink-500'
               : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
           }`}
         >
           {page}
-        </Link>
+        </button>
       ))}
       
       {/* 下一頁 */}
       {currentPage < totalPages && (
-        <Link
-          href={createPageUrl(currentPage + 1)}
-          className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={isLoading}
+          className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           下一頁
-        </Link>
+        </button>
       )}
     </div>
   );
