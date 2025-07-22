@@ -16,11 +16,57 @@
 .article-content img {
   max-width: 100%;
   height: auto;
-  /* 預留空間，避免載入後版面位移 (CLS) */
-  aspect-ratio: 16 / 10;
+  /* 使用 CSS container query 和 aspect-ratio 的混合方案 */
+  /* 默認最小高度防止 CLS */
+  min-height: 200px;
+  /* 載入時顯示背景色，避免空白閃爍 */
+  background-color: #f3f4f6;
   border-radius: 0.5rem;
-  margin: 2rem 0;
+  margin: 2rem auto;
+  /* 置中顯示 */
+  display: block;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* 平滑載入效果 */
+  transition: background-color 0.3s ease, min-height 0.3s ease;
+  /* 智能圖片容器 */
+  contain: layout style;
+}
+
+/* 載入完成後移除背景色和最小高度限制 */
+.article-content img[data-loaded="true"] {
+  background-color: transparent;
+  min-height: unset;
+}
+
+/* 處理超寬圖片（橫向圖片） */
+.article-content img[style*="aspect-ratio"] {
+  /* 如果圖片有設定 aspect-ratio，表示是已知比例 */
+  object-fit: cover;
+}
+
+/* 處理直立圖片的特殊樣式 */
+.article-content img[data-orientation="portrait"] {
+  max-height: 80vh;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  margin: 2rem auto;
+}
+
+/* 處理載入狀態 */
+.article-content img:not([src]) {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .article-content h2 {

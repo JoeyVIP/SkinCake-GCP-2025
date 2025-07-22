@@ -111,11 +111,16 @@ export function getFeaturedImageFromPost(post: any): ImageSource {
   const featuredMedia = post._embedded?.['wp:featuredmedia']?.[0];
   if (featuredMedia) {
     const url = getBestImageUrl(featuredMedia);
+    
+    // 提取圖片實際尺寸
+    const width = featuredMedia.media_details?.width;
+    const height = featuredMedia.media_details?.height;
+    
     return {
       url,
       alt: featuredMedia.alt_text || post.title?.rendered || '文章圖片',
-      width: featuredMedia.media_details?.width,
-      height: featuredMedia.media_details?.height
+      width,
+      height
     };
   }
   
@@ -134,19 +139,71 @@ export function getFeaturedImageFromPost(post: any): ImageSource {
 }
 
 /**
- * 創建帶有錯誤處理的圖片 props - GCP 環境優化
+ * 根據圖片尺寸計算智能的 aspect-ratio 和 CSS 樣式
+ */
+export function calculateImageStyles(imageSource: ImageSource): React.CSSProperties {
+  // 如果沒有尺寸資訊，使用預設的最小高度
+  if (!imageSource.width || !imageSource.height) {
+    return {
+      minHeight: '200px'
+    };
+  }
+  
+  const aspectRatio = imageSource.width / imageSource.height;
+  
+  // 根據比例判斷圖片類型並設定適當的樣式
+  if (aspectRatio > 1.5) {
+    // 橫向圖片 (寬 > 1.5 倍高)
+    return {
+      aspectRatio: `${imageSource.width} / ${imageSource.height}`,
+      objectFit: 'cover' as const
+    };
+  } else if (aspectRatio < 0.8) {
+    // 直立圖片 (高 > 1.25 倍寬)
+    return {
+      aspectRatio: `${imageSource.width} / ${imageSource.height}`,
+      objectFit: 'contain' as const,
+      minHeight: '300px'
+    };
+  } else {
+    // 接近正方形的圖片
+    return {
+      aspectRatio: `${imageSource.width} / ${imageSource.height}`,
+      objectFit: 'cover' as const
+    };
+  }
+}
+
+/**
+ * 創建帶有錯誤處理的圖片 props - 伺服器端版本（無事件處理器）
  */
 export function createImageProps(imageSource: ImageSource, fallback?: string) {
-  const finalFallback = fallback || DEFAULT_IMAGES.article;
+  const imageStyles = calculateImageStyles(imageSource);
   
   return {
     src: transformCdnUrl(imageSource.url),
     alt: imageSource.alt || '圖片',
+    width: imageSource.width,
+    height: imageSource.height,
+    style: imageStyles,
     // GCP 環境：禁用圖片優化相關屬性
     ...(isCloudRun ? {
       unoptimized: true, // 強制禁用優化
       loader: undefined, // 不使用自定義載入器
     } : {}),
+    // 移除事件處理器，避免 SSR 錯誤
+  };
+}
+
+/**
+ * 創建帶有事件處理器的圖片 props - 客戶端版本
+ */
+export function createImagePropsWithHandlers(imageSource: ImageSource, fallback?: string) {
+  const finalFallback = fallback || DEFAULT_IMAGES.article;
+  const baseProps = createImageProps(imageSource, fallback);
+  
+  return {
+    ...baseProps,
     onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
       const target = e.target as HTMLImageElement;
       if (target.src !== finalFallback && !target.src.includes('default-post-image.svg')) {

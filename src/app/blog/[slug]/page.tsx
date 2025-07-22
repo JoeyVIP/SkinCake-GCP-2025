@@ -178,18 +178,18 @@ export default async function BlogPost({ params }: Props) {
             {/* 麵包屑導航 */}
             <Breadcrumb items={breadcrumbItems} className="mb-6 px-4" />
             
-            {/* 特色圖片 - 按照線上版本的精確實現 */}
+            {/* 特色圖片 - 固定 16:10 比例 */}
             {featuredImage && (
-              <div className="mb-8 relative w-full h-[400px]">
-                <Image 
-                  src={imageProps.src}
-                  alt={imageProps.alt}
+              <div className="mb-8 relative w-full aspect-[16/10] overflow-hidden rounded-xl shadow-md">
+                <Image
+                  src={featuredImage}
+                  alt={post.title.rendered}
                   fill
-                  className="object-cover rounded-xl shadow-md"
                   priority
                   fetchPriority="high"
                   sizes="(max-width: 768px) 100vw, 800px"
                   quality={85}
+                  className="object-cover"
                 />
               </div>
             )}
