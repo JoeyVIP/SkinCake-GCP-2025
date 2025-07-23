@@ -67,6 +67,22 @@ function createFetchHeaders(): HeadersInit {
 
 // 帶重試機制的 fetch 函數 - GCP 優化版本
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = isCloudRun ? 1 : 2): Promise<Response> {
+  const isServer = typeof window === 'undefined';
+  const timeoutMs = isCloudRun ? 10000 : 15000;
+
+  // 只有在伺服器端 (Node) 才使用 AbortSignal.timeout，瀏覽器端避免相容性問題
+  let signal: AbortSignal | undefined = undefined;
+  if (isServer) {
+    if (typeof (AbortSignal as any).timeout === 'function') {
+      signal = (AbortSignal as any).timeout(timeoutMs);
+    } else {
+      // Fallback：自行建立 AbortController
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), timeoutMs);
+      signal = controller.signal;
+    }
+  }
+
   // 統一請求配置 - 修復快取衝突
   const baseOptions: RequestInit = {
     ...options,
@@ -74,8 +90,7 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
       ...createFetchHeaders(),
       ...options.headers
     },
-    // GCP 環境：使用較短的超時時間避免建置逾時
-    signal: AbortSignal.timeout(isCloudRun ? 10000 : 15000)
+    ...(signal ? { signal } : {})
   };
 
   for (let attempt = 1; attempt <= retries + 1; attempt++) {
