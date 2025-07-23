@@ -163,6 +163,7 @@ img,video{max-width:100%;height:auto}
 /* 響應式隱藏/顯示 */
 .hidden{display:none}
 @media (min-width:768px){.md\\:block{display:block}}
+@media (min-width:1024px){.lg\:flex{display:flex}}
 
 /* 過渡效果 */
 .transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4,0,0.2,1);transition-duration:150ms}
