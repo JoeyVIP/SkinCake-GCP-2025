@@ -365,17 +365,19 @@ export async function getPostsByCategoryWithPagination(
     // GCP 環境：大幅減少每頁數量避免超時
     const actualPerPage = isCloudRun ? Math.min(perPage, 6) : perPage;
     
-    const response = await fetchWithRetry(
-      `${API_BASE}/posts?categories=${categoryId}&per_page=${actualPerPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish&_fields=id,slug,title,date,featured_media,_links,_embedded`,
-      { 
-        // 修復：生產環境也要有快取
-        next: { revalidate: 3600 }, // 1小時快取
-        ...(isCloudRun && { 
-          // GCP 環境額外設定
-          headers: { 'Cache-Control': 'public, max-age=3600' }
-        })
-      }
-    );
+    const isBrowser = typeof window !== 'undefined';
+    const urlPath = `posts?categories=${categoryId}&per_page=${actualPerPage}&page=${page}&orderby=${orderBy}&order=${order}&_embed&status=publish&_fields=id,slug,title,date,featured_media,_links,_embedded`;
+
+    const fullUrl = isBrowser 
+      ? `/api/wp/${urlPath}` 
+      : `${API_BASE}/${urlPath}`;
+
+    const response = isBrowser
+      ? await fetch(fullUrl, { cache: 'no-store' })
+      : await fetchWithRetry(fullUrl, { 
+          next: { revalidate: 3600 },
+          ...(isCloudRun && { headers: { 'Cache-Control': 'public, max-age=3600' } })
+        });
     
     const posts = await response.json();
     const totalPages = parseInt(response.headers.get('X-WP-TotalPages') || '1');
