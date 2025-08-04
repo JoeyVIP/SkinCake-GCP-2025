@@ -27,8 +27,8 @@ Disallow: /_next/
 Disallow: /admin/
 
 # 網站地圖
-Sitemap: ${process.env.FRONTEND_DOMAIN}/sitemap.xml
-Sitemap: ${process.env.FRONTEND_DOMAIN}/server-sitemap.xml
+Sitemap: ${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/sitemap.xml
+Sitemap: ${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/server-sitemap.xml
 `,
     {
       headers: {

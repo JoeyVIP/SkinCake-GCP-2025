@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: process.env.SITE_URL || 'https://skincake.tw',
+  siteUrl: process.env.FRONTEND_DOMAIN || 'https://skincake.tw',
   generateRobotsTxt: true,
   changefreq: 'daily',
   priority: 0.7,
@@ -23,7 +23,7 @@ module.exports = {
   
   // 額外的動態 sitemap
   additionalSitemaps: [
-    'https://skincake.tw/server-sitemap.xml',
+    `${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/server-sitemap.xml`,
   ],
   
   // robots.txt 配置
@@ -44,8 +44,8 @@ module.exports = {
       }
     ],
     additionalSitemaps: [
-      'https://skincake.tw/sitemap.xml',
-      'https://skincake.tw/server-sitemap.xml',
+      `${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/sitemap.xml`,
+      `${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/server-sitemap.xml`,
     ],
   },
   

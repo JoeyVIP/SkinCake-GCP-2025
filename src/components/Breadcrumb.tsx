@@ -13,6 +13,8 @@ interface BreadcrumbProps {
 }
 
 export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
+  const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.tw';
+  
   // 生成結構化數據
   const structuredData = {
     '@context': 'https://schema.org',
@@ -21,7 +23,7 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      ...(item.href && { item: `https://skincake.tw${item.href}` })
+      ...(item.href && { item: `${baseUrl}${item.href}` })
     }))
   };
 

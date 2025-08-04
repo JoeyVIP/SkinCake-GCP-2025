@@ -2,7 +2,7 @@ import { getServerSideSitemap } from 'next-sitemap'
 import { getAllPosts, getCategories } from '@/lib/wordpress-api'
 
 export async function GET(request: Request) {
-  const baseUrl = process.env.SITE_URL || 'https://skincake.tw'
+  const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.tw'
   
   try {
     let allPosts: any[] = []

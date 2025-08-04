@@ -1,6 +1,8 @@
 import Script from 'next/script';
 
 export default function SEOHead() {
+  const baseUrl = process.env.FRONTEND_DOMAIN || 'https://skincake.tw';
+  
   return (
     <>
       {/* 結構化數據 */}
@@ -12,10 +14,10 @@ export default function SEOHead() {
             "@context": "https://schema.org",
             "@type": "WebSite",
             "name": "SKIN CAKE 肌膚蛋糕",
-            "url": "https://skincake.tw",
+            "url": baseUrl,
             "potentialAction": {
               "@type": "SearchAction",
-              "target": "https://skincake.tw/search?q={search_term_string}",
+              "target": `${baseUrl}/search?q={search_term_string}`,
               "query-input": "required name=search_term_string"
             }
           })

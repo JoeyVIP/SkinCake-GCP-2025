@@ -14,6 +14,7 @@ const noto_sans_tc = Noto_Sans_TC({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.FRONTEND_DOMAIN || 'https://skincake.tw'),
   title: "SkinCake 肌膚蛋糕 - 韓國美容旅遊資訊",
   description: "探索最新的韓國美容、時尚、旅遊和美食資訊。SkinCake 為您提供最深入的在地報導。",
   keywords: "韓國美容,韓國旅遊,韓國購物,韓國美食,首爾旅遊,韓國保養品,韓國化妝品",
@@ -63,7 +64,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'zh_TW',
-    url: 'https://skincake.tw',
+    url: process.env.FRONTEND_DOMAIN || 'https://skincake.tw',
     siteName: 'SkinCake 肌膚蛋糕',
     title: 'SkinCake 肌膚蛋糕 - 韓國美容旅遊資訊',
     description: '探索最新的韓國美容、時尚、旅遊和美食資訊。SkinCake 為您提供最深入的在地報導。',
@@ -85,7 +86,7 @@ export const metadata: Metadata = {
     images: ['/images/main_skincake_logo.png'],
   },
   alternates: {
-    canonical: 'https://skincake.tw',
+    canonical: process.env.FRONTEND_DOMAIN || 'https://skincake.tw',
   },
 };
 

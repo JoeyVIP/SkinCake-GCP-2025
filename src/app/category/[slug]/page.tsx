@@ -66,12 +66,26 @@ export async function generateMetadata({
       title: pageTitle,
       description: `探索 ${category.name} 相關文章，發現韓國旅遊的美好體驗。共有 ${category.count} 篇精彩內容等您來看。`,
       keywords: `${category.name}, 韓國旅遊, 韓國美容, 韓國購物, 韓國美食, SkinCake`,
-      robots: {
-        index: false, // 開發環境不索引
+      robots: process.env.FRONTEND_DOMAIN?.includes('.vip') ? {
+        index: false,
         follow: false,
+        googleBot: {
+          index: false,
+          follow: false,
+        },
+      } : {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
       },
       alternates: {
-        canonical: `https://skincake.tw/category/${encodeURIComponent(category.slug)}`,
+        canonical: `${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/category/${encodeURIComponent(category.slug)}`,
       },
       formatDetection: {
         telephone: false,

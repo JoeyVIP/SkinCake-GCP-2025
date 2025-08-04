@@ -3,6 +3,9 @@ const nextConfig = {
   // 生產環境需要 standalone 輸出
   output: 'standalone',
   
+  // 統一 URL 格式，避免重定向問題
+  trailingSlash: false,
+  
   // GCP Cloud Run 環境檢測
   experimental: {
     // 增加建置工作器的記憶體限制
