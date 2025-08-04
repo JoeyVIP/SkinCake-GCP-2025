@@ -44,7 +44,6 @@ module.exports = {
       }
     ],
     additionalSitemaps: [
-      `${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/sitemap.xml`,
       `${process.env.FRONTEND_DOMAIN || 'https://skincake.tw'}/server-sitemap.xml`,
     ],
   },
