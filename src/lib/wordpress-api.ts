@@ -233,8 +233,10 @@ export async function getRandomPosts(count: number = 6, excludeId?: number): Pro
 
 export async function getPostBySlug(slug: string): Promise<WPPost | null> {
   try {
+    // 🔧 修復：正確編碼 slug 參數以支持中文字符
+    const encodedSlug = encodeURIComponent(slug);
     const response = await fetchWithRetry(
-      `${API_BASE}/posts?slug=${slug}&_embed&status=publish`,
+      `${API_BASE}/posts?slug=${encodedSlug}&_embed&status=publish`,
       { 
         // 修復：生產環境也要有快取
         next: { revalidate: 3600 }, // 1小時快取

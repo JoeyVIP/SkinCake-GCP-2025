@@ -6,6 +6,9 @@ const nextConfig = {
   // 統一 URL 格式，避免重定向問題
   trailingSlash: false,
   
+  // 🔧 修復：防止 Next.js 自動編碼中文 URL 造成重定向
+  skipMiddlewareUrlNormalize: true,
+  
   // GCP Cloud Run 環境檢測
   experimental: {
     // 增加建置工作器的記憶體限制
@@ -96,7 +99,10 @@ const nextConfig = {
     ];
   },
   
-
+  // 🔧 修復：防止中文 URL 重定向問題，確保 Google 正確索引
+  async redirects() {
+    return [];
+  },
   
   // 優化 webpack 配置以避免記憶體問題
   webpack: (config, { dev, isServer }) => {

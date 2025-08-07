@@ -34,7 +34,9 @@ export const revalidate = 3600; // 1 小時
 // 生成 metadata 以確保 Facebook 和其他社交平台能正確抓取資訊
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const post = await getPostBySlug(params.slug);
+    // 🔧 修復：處理 URL 編碼的 slug，確保中文字符正確解析
+    const decodedSlug = decodeURIComponent(params.slug);
+    const post = await getPostBySlug(decodedSlug);
     
     if (!post) {
       return {
@@ -135,7 +137,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPost({ params }: Props) {
   try {
-    const post = await getPostBySlug(params.slug);
+    // 🔧 修復：處理 URL 編碼的 slug，確保中文字符正確解析
+    const decodedSlug = decodeURIComponent(params.slug);
+    const post = await getPostBySlug(decodedSlug);
     
     if (!post) {
       notFound();
